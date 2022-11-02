@@ -17,3 +17,31 @@
 // - You can implement any multiplication algorithm you want.
 
 // Put your code here.
+
+@R0
+D = M
+@R2
+M = 0
+@i
+M=D
+//if R0 = 0, we are done
+@R0
+D = M
+@END
+D;JEQ
+
+(LOOP)
+//R2 = R2 + R1
+@R1
+D = M
+@R2
+M = M + D
+@i
+M = M - 1
+D = M
+@LOOP
+D;JGT
+
+@END
+(END)
+M;JMP
