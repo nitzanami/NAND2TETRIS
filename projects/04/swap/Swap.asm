@@ -14,4 +14,107 @@
 // Requirements:
 // - Changing R14, R15 is not allowed.
 
-// Put your code here.
+// minI = maxI = Array start index
+@R14
+D = M
+@minI
+M = D
+@maxI
+M = D
+
+//min = max =RAM[RAM[R14]]
+A = D
+D = M
+@max
+M = D
+@min
+M = D
+
+//i + startindex + 1
+@R14
+D = M + 1
+@i
+M = D
+
+(LOOP)
+
+@i
+A = M
+D = M
+@max
+D = D - M
+@MAX
+D;JGT
+
+@i
+A = M
+D = M
+@min
+D = D - M
+@MIN
+D;JLT
+
+@LOOPEND
+0;JMP
+
+(MAX)
+//maxI = i
+@i
+D = M
+@maxI
+M = D
+//max = RAM[i]
+A = D
+D = M
+@max
+M = D
+
+@LOOPEND
+0;JMP
+
+(MIN)
+//minI = i
+@i
+D = M
+@minI
+M = D
+//min = RAM[i]
+A = D
+D = M
+@min
+M = D
+
+(LOOPEND)
+//i = i + 1
+@i
+M = M + 1
+//if 
+D = M
+@R14
+D = D - M
+@R15
+D = D - M
+
+@LOOP
+D;JLT
+//RAM[maxI] = min
+@min
+D = M
+@maxI
+A = M
+M = D
+//RAM[minI] = max
+@max
+D = M
+@minI
+A = M
+M = D
+
+@END
+(END)
+0;JMP
+
+
+
+
+
