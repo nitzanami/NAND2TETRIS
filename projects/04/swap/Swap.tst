@@ -9,22 +9,40 @@ output-file Swap.out,
 compare-to Swap.cmp,
 output-list RAM[14]%D3.6.3 RAM[15]%D3.6.3 RAM[2048]%D3.6.3 RAM[2049]%D3.6.3;
 
-set PC 0,
-set RAM[2048] 0,
-set RAM[2049] 0,
-set RAM[14] 2048,
-set RAM[15] 1;
-repeat 30000 {
-  ticktock;
-}
-output;
 
 set PC 0,
 set RAM[2048] -1,
 set RAM[2049] 1,
 set RAM[14] 2048,
 set RAM[15] 2;
-repeat 30000 {
+repeat 70 {
   ticktock;
 }
 output;
+
+
+set PC 0,
+set RAM[2048] 0,
+set RAM[2049] 0,
+set RAM[14] 2048,
+set RAM[15] 1;
+repeat 70 {
+  ticktock;
+}
+output;
+
+set PC 0,
+set RAM[2048] 70,
+set RAM[2049] -635,
+set RAM[2050] 65,
+set RAM[2051] -34,
+set RAM[2052] 1000,
+set RAM[14] 2048,
+set RAM[15] 4;
+repeat 500 {
+	ticktock;
+}
+output;
+
+
+
