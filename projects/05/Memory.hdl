@@ -27,15 +27,15 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-	Dmux(in = true, sel = address[14], a = accessRAM, notAccessRam);
+	DMux(in = true, sel = address[14], a = accessRAM, b = notAccessRam);
 	DMux(in = notAccessRam, sel = address[13],a = accessScreen, b = accessKeyboard);
 	
-	RAM16K(in = in, load = accessRAM, address = address[0..13], out = outRAM);
-	Screen(address = address[0..12], in = in, load = accessScreen, out = outScreen);
+	And(a = accessScreen, b = load, out = loadScreen);
+	And(a = accessRAM, b = load, out = loadRAM);
+	RAM16K(in = in, load = loadRAM, address = address[0..13], out = outRAM);
+	Screen(address = address[0..12], in = in, load = loadScreen, out = outScreen);
 	Keyboard(out = outKeyBoard);
 	
-	Mux(a=,b=,sel=,out=);
-	Mux(a=,b=,sel=,out=);
-	
-	
+	Mux16(a = outKeyBoard ,b = outScreen ,sel = accessScreen, out = outTemp);
+	Mux16(a = outTemp ,b = outRAM , sel = accessRAM , out = out);
 }
