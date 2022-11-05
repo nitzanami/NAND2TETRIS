@@ -1,0 +1,9 @@
+//out = 1 if in is negative, else out = 0
+
+CHIP IsNegative{
+	IN in[16];
+	OUT out;
+	
+	PARTS:
+	And(a = in[15], b = in[15], out = out);
+}

@@ -27,5 +27,20 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+	//decide which memory chip to access
+	DMux(in = true, sel = address[14], a = accessRAM, b = notAccessRam);
+	DMux(in = notAccessRam, sel = address[13],a = accessScreen, b = accessKeyboard);
+	
+	//check if the chip should be loaded
+	And(a = accessScreen, b = load, out = loadScreen);
+	And(a = accessRAM, b = load, out = loadRAM);
+	
+	//access the chips
+	RAM16K(in = in, load = loadRAM, address = address[0..13], out = outRAM);
+	Screen(address = address[0..12], in = in, load = loadScreen, out = outScreen);
+	Keyboard(out = outKeyBoard);
+	
+	//pick the right output
+	Mux16(a = outKeyBoard ,b = outScreen ,sel = accessScreen, out = outTemp);
+	Mux16(a = outTemp ,b = outRAM , sel = accessRAM , out = out);
 }
