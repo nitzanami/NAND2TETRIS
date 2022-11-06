@@ -5,3 +5,6 @@ tools/bin/Hardware Simulator.dat
 tools/bin/CPU Emulator.dat
 tools/bin/Hardware Simulator.dat
 tools/bin/Hardware Simulator.dat
+tools/bin/CPU Emulator.dat
+tools/bin/Hardware Simulator.dat
+*.dat
