@@ -45,7 +45,8 @@ CHIP CPU {
 	Mux(a=true,b=instruction[5],sel=instruction[15],out=loadA);
 	ARegister(in=inA,load=loadA,out=Aout); //instruction[11] is the first destenation bit
 	
-	DRegister(in=ALUout,load=instruction[4],out=Dout); //instruction[12] is the second destenation bit
+	And(a=instruction[4],b=instruction[15],out=loadD);
+	DRegister(in=ALUout,load=loadD,out=Dout); //instruction[12] is the second destenation bit
 	
 	Mux16(a=Aout,b=inM,sel=instruction[12],out=Mux1out);
 	
