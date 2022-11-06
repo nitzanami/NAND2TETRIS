@@ -36,3 +36,60 @@
 //   interactively by pressing and releasing some keyboard keys
 
 // Put your code here.
+
+(LOOP)
+	@KBD
+	D=M
+
+	@FILL_WHITE
+	D;JEQ
+	@FILL_BLACK
+	0;JMP
+	
+(FILL_WHITE)
+	@SCREEN
+	D=M
+	@LOOP
+	D;JEQ
+	@i
+	M=0
+(WHITE_LOOP)
+	@i
+	D=M
+	@SCREEN
+	A=A+D
+	M=0
+	@i
+	M=M+1
+	@8191
+	D=D-A
+	@WHITE_LOOP
+	D;JNE
+	@LOOP
+	0;JMP
+	
+(FILL_BLACK)
+	@SCREEN
+	D=M
+	D=D+1
+	@LOOP
+	D;JEQ
+	@i
+	M=0
+(BLACK_LOOP)
+	@i
+	D=M
+	@SCREEN
+	A=A+D
+	M=-1
+	@i
+	M=M+1
+	@8191
+	D=D-A
+	@BLACK_LOOP
+	D;JNE
+	@LOOP
+	0;JMP
+	
+	
+	
