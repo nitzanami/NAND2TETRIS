@@ -38,5 +38,40 @@ CHIP CpuMul {
         pc[15];          // address of next instruction
     
     PARTS:
-    // Put your code here:
+	Mux16(a=instruction,b=ALUout,sel=instruction[15],out=inA);
+	
+	Mux(a=true,b=instruction[5],sel=instruction[15],out=loadA);
+	ARegister(in=inA,load=loadA,out=Aout); //instruction[5] is the first destenation bit
+	
+	And(a=instruction[4],b=instruction[15],out=loadD);
+	DRegister(in=ALUout,load=loadD,out=Dout); //instruction[4] is the second destenation bit
+	
+	Mux16(a=Aout,b=inM,sel=instruction[12],out=Mux1out);
+	
+	//ALU(x=Dout,y=Mux1out,zx=instruction[11],nx=instruction[10],zy=instruction[9],ny=instruction[8],f=instruction[7],no=instruction[6],out=ALUout,zr=zr,ng=ng);
+	ExtendAlu(x=Dout,y=Mux1out,instruction=instruction[6..14],out=ALUout,zr=zr,ng=ng);
+	And16(a=ALUout,b=ALUout,out=outM); //channel ALUout to the M output
+	
+	And(a=instruction[3],b=instruction[15],out=writeM); // set writeM to the last destenation bit
+	And16(a=Aout,b=Aout,out[0..14]=addressM);
+	
+	//pc logics:
+	Not(in=zr,out=Nzr);
+	Not(in=ng,out=Nng);
+	And(a=instruction[2],b=ng,out=A1);
+	And(a=instruction[2],b=Nzr,out=A2);
+	And(a=instruction[1],b=Nng,out=A3);
+	And(a=instruction[1],b=zr,out=A4);
+	And(a=instruction[0],b=Nng,out=A5);
+	And(a=instruction[0],b=Nzr,out=A6);
+	And(a=A1,b=A3,out=O1);
+	And(a=A1,b=A2,out=O5);
+	Or(a=O5,b=A4,out=O2);
+	And(a=A5,b=A6,out=O3);
+	Or(a=O1,b=O2,out=O4);
+	Or(a=O3,b=O4,out=O6);
+	And(a=O6,b=instruction[15],out=PCload);
+	
+	Not(in=PCload,out=NPCload);
+	PC(in=Aout,load=PCload,inc=NPCload,reset=reset,out[0..14]=pc);
 }
