@@ -21,10 +21,11 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        # Your code goes here!
-        # A good place to start is to read all the lines of the input:
-        # input_lines = input_file.read().splitlines()
-        pass
+        self.current_command = None
+        self.input_lines = input_file.read().replace(" ", "").replace("\t", "").splitlines()
+        for line in self.input_lines:
+            if line.startswith("//"):
+                self.input_lines.remove(line)
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -32,14 +33,14 @@ class Parser:
         Returns:
             bool: True if there are more commands, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return self.input_lines.len() > 0
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current command.
         Should be called only if has_more_commands() is true.
         """
-        # Your code goes here!
+        self.current_command = self.input_lines[0]
+        self.input_lines.remove(self.current_command)
         pass
 
     def command_type(self) -> str:

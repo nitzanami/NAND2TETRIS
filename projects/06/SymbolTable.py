@@ -18,8 +18,16 @@ class SymbolTable:
         and their pre-allocated RAM addresses, according to section 6.2.3 of the
         book.
         """
-        # Your code goes here!
-        pass
+        self.values = {
+            "SP": 0x0000,
+            "LCL": 0x0001,
+            "ARG": 0x0002,
+            "THIS": 0x0003,
+            "SCREEN": 0x4000,
+            "KBD": 0x6000
+        }
+        for i in range(16):
+            self.values.update({f"R{i}": i})
 
     def add_entry(self, symbol: str, address: int) -> None:
         """Adds the pair (symbol, address) to the table.
@@ -28,8 +36,8 @@ class SymbolTable:
             symbol (str): the symbol to add.
             address (int): the address corresponding to the symbol.
         """
-        # Your code goes here!
-        pass
+        if not self.contains(symbol):
+            self.values.update({symbol: address})
 
     def contains(self, symbol: str) -> bool:
         """Does the symbol table contain the given symbol?
@@ -40,8 +48,7 @@ class SymbolTable:
         Returns:
             bool: True if the symbol is contained, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return symbol in self.values
 
     def get_address(self, symbol: str) -> int:
         """Returns the address associated with the symbol.
@@ -52,5 +59,4 @@ class SymbolTable:
         Returns:
             int: the address associated with the symbol.
         """
-        # Your code goes here!
-        pass
+        return self.values[symbol]
