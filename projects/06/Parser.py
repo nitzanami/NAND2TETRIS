@@ -10,7 +10,7 @@ import typing
 
 class Parser:
     """Encapsulates access to the input code. Reads an assembly program
-    by reading each command line-by-line, parses the current command,
+    by reaing each command line-by-line, parseds the current command,
     and provides convenient access to the commands components (fields
     and symbols). In addition, removes all white space and comments.
     """
@@ -21,11 +21,17 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
+        self.line = 0;
         self.current_command = None
         self.input_lines = input_file.read().replace(" ", "").replace("\t", "").splitlines()
+        NoCommentsLines = []
         for line in self.input_lines:
-            if line.startswith("//"):
-                self.input_lines.remove(line)
+            if not (line.startswith("//") or len(line)==0):
+                NoCommentsLines.append(line.split('/')[0])
+        self.input_lines = NoCommentsLines
+        #for line in self.input_lines: #DEL=========================
+        #    print(line)               #DEL=========================
+        self.advance()
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -33,14 +39,15 @@ class Parser:
         Returns:
             bool: True if there are more commands, False otherwise.
         """
-        return self.input_lines.len() > 0
+
+        return self.line < len(self.input_lines)
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current command.
         Should be called only if has_more_commands() is true.
         """
-        self.current_command = self.input_lines[0]
-        self.input_lines.remove(self.current_command)
+        self.current_command = self.input_lines[self.line]
+        self.line += 1
         pass
 
     def command_type(self) -> str:
@@ -52,7 +59,12 @@ class Parser:
             "L_COMMAND" (actually, pseudo-command) for (Xxx) where Xxx is a symbol
         """
         # Your code goes here!
-        pass
+        if str(self.current_command).startswith('@'):
+            return "A_COMMAND"
+        elif str(self.current_command).startswith('('):
+            return "L_COMMAND"
+        else:
+            return "C_COMMAND"
 
     def symbol(self) -> str:
         """
@@ -61,8 +73,11 @@ class Parser:
             (Xxx). Should be called only when command_type() is "A_COMMAND" or 
             "L_COMMAND".
         """
-        # Your code goes here!
-        pass
+        if str(self.current_command).startswith('@'): #if A command
+            return self.current_command[1:]
+        else: #if L command
+            return self.current_command[1:-1]
+
 
     def dest(self) -> str:
         """
@@ -70,8 +85,9 @@ class Parser:
             str: the dest mnemonic in the current C-command. Should be called 
             only when commandType() is "C_COMMAND".
         """
-        # Your code goes here!
-        pass
+        return str(self.current_command).split("=")[0] if "=" in str(self.current_command) else "null"
+
+
 
     def comp(self) -> str:
         """
@@ -80,7 +96,7 @@ class Parser:
             only when commandType() is "C_COMMAND".
         """
         # Your code goes here!
-        pass
+        return str(self.current_command).split('=')[-1].split(';')[0]
 
     def jump(self) -> str:
         """
@@ -89,4 +105,4 @@ class Parser:
             only when commandType() is "C_COMMAND".
         """
         # Your code goes here!
-        pass
+        return str(self.current_command).split(';')[-1] if ";" in str(self.current_command) else "null"

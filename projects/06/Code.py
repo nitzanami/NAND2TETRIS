@@ -49,9 +49,11 @@ class Code:
         Returns:
             str: 3-bit long binary code of the given mnemonic.
         """
-        return f"{mnemonic.__contains__('A')}" \
-               f"{mnemonic.__contains__('D')}" \
-               f"{mnemonic.__contains__('M')}"
+
+        isA = "1" if(mnemonic.__contains__('A')) else "0"
+        isD = "1" if (mnemonic.__contains__('D')) else "0"
+        isM = "1" if (mnemonic.__contains__('M')) else "0"
+        return isA+isD+isM
 
     @staticmethod
     def comp(mnemonic: str) -> str:
@@ -63,10 +65,12 @@ class Code:
             str: the binary code of the given mnemonic.
         """
         result = '0'
-        if mnemonic.__contains__('M'):
+        if 'M' in mnemonic:
             result = '1'
-            mnemonic.replace('M', 'A')
+            mnemonic = mnemonic.replace("M", 'A')
         return result + Code.comp_mnemonics[mnemonic]
+
+
 
     @staticmethod
     def jump(mnemonic: str) -> str:
