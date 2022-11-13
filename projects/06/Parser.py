@@ -6,6 +6,7 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+from Code import Code
 
 
 class Parser:
@@ -21,17 +22,18 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        self.line = 0;
-        self.current_command = None
+        self.line = 0
+        # Remove whitespaces and separate lines
         self.input_lines = input_file.read().replace(" ", "").replace("\t", "").splitlines()
         NoCommentsLines = []
+        # Remove comments and empty lines
         for line in self.input_lines:
-            if not (line.startswith("//") or len(line)==0):
-                NoCommentsLines.append(line.split('/')[0])
+            if not (line.startswith("//") or len(line) == 0):
+                NoCommentsLines.append(line.split('//')[0])
         self.input_lines = NoCommentsLines
-        #for line in self.input_lines: #DEL=========================
-        #    print(line)               #DEL=========================
         self.advance()
+        # for line in self.input_lines: #DEL=========================
+        #    print(line)               #DEL=========================
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -73,11 +75,10 @@ class Parser:
             (Xxx). Should be called only when command_type() is "A_COMMAND" or 
             "L_COMMAND".
         """
-        if str(self.current_command).startswith('@'): #if A command
+        if str(self.current_command).startswith('@'):  # if A command
             return self.current_command[1:]
-        else: #if L command
+        else:  # if L command
             return self.current_command[1:-1]
-
 
     def dest(self) -> str:
         """
@@ -86,8 +87,6 @@ class Parser:
             only when commandType() is "C_COMMAND".
         """
         return str(self.current_command).split("=")[0] if "=" in str(self.current_command) else "null"
-
-
 
     def comp(self) -> str:
         """
@@ -106,3 +105,23 @@ class Parser:
         """
         # Your code goes here!
         return str(self.current_command).split(';')[-1] if ";" in str(self.current_command) else "null"
+
+    def parse_line(self, lineCount, varCount, st):
+        if self.command_type() == "A_COMMAND":
+            if self.symbol().isnumeric():
+                address = int(self.symbol())
+            else:
+                if not st.contains(self.symbol()):
+                    st.add_entry(self.symbol(), varCount + 16)
+                    varCount += 1
+                address = st.get_address(self.symbol())
+            lineCount += 1
+            return bin(address)[2:].zfill(16), lineCount, varCount
+
+        if self.command_type() == "C_COMMAND":
+            lineCount += 1
+            line = Code.comp(self.comp())
+            line += Code.dest(self.dest())
+            line += Code.jump(self.jump())
+            return line, lineCount, varCount
+        return '', lineCount, varCount

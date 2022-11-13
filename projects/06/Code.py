@@ -9,7 +9,7 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 class Code:
     """Translates Hack assembly language mnemonics into binary codes."""
-    comp_mnemonics = {
+    normal_comp_mnemonics = {
         '0': '101010',
         '1': '111111',
         '-1': '111010',
@@ -27,7 +27,15 @@ class Code:
         'D-A': '010011',
         'A-D': '000111',
         'D&A': '000000',
-        'D|A': '010101'
+        'D|A': '010101',
+    }
+    shift_comp_mnemonics = {
+        'A<<': '010',
+        'D<<': '011',
+        'M<<': '110',
+        'A>>': '000',
+        'D>>': '001',
+        'M>>': '100'
     }
     jump_mnemonics = {
         'null': '000',
@@ -41,7 +49,7 @@ class Code:
     }
 
     @staticmethod
-    def dest(mnemonic: str) -> str:
+    def dest(mnemonic) -> str:
         """
         Args:
             mnemonic (str): a dest mnemonic string.
@@ -50,13 +58,13 @@ class Code:
             str: 3-bit long binary code of the given mnemonic.
         """
 
-        isA = "1" if(mnemonic.__contains__('A')) else "0"
+        isA = "1" if (mnemonic.__contains__('A')) else "0"
         isD = "1" if (mnemonic.__contains__('D')) else "0"
         isM = "1" if (mnemonic.__contains__('M')) else "0"
-        return isA+isD+isM
+        return isA + isD + isM
 
     @staticmethod
-    def comp(mnemonic: str) -> str:
+    def comp(mnemonic) -> str:
         """
         Args:
             mnemonic (str): a comp mnemonic string.
@@ -64,16 +72,16 @@ class Code:
         Returns:
             str: the binary code of the given mnemonic.
         """
+        if mnemonic in Code.shift_comp_mnemonics.keys():
+            return '101' + Code.shift_comp_mnemonics[mnemonic] + '0' * 4
         result = '0'
         if 'M' in mnemonic:
             result = '1'
             mnemonic = mnemonic.replace("M", 'A')
-        return result + Code.comp_mnemonics[mnemonic]
-
-
+        return '111' + result + Code.normal_comp_mnemonics[mnemonic]
 
     @staticmethod
-    def jump(mnemonic: str) -> str:
+    def jump(mnemonic) -> str:
         """
         Args:
             mnemonic (str): a jump mnemonic string.

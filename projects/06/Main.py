@@ -10,7 +10,6 @@ import sys
 import typing
 from SymbolTable import SymbolTable
 from Parser import Parser
-from Code import Code
 
 
 def assemble_file(
@@ -21,54 +20,31 @@ def assemble_file(
         input_file (typing.TextIO): the file to assemble.
         output_file (typing.TextIO): writes all output to this file.
     """
-    # Your code goes here!
-    # A good place to start is to initialize a new Parser object:
-    # parser = Parser(input_file)
-    # Note that you can write to output_file like so:
-    # output_file.write("Hello world! \n")
+    # initialize variables
     parser = Parser(input_file)
     st = SymbolTable()
     lineCount = 0
+
+    # first pass:
     while parser.has_more_commands():
-        if(parser.command_type()) == "L_COMMAND":
+        if (parser.command_type()) == "L_COMMAND":
             tag = parser.symbol()
             st.add_entry(tag, lineCount)
         else:
             lineCount += 1
         parser.advance()
+
+    # initialize second pass
     parser.line = 0
     lineCount = 0
     varCount = 0
+
+    # second pass
     while parser.has_more_commands():
         parser.advance()
-        line = ""
-        if(parser.command_type()).__eq__("L_COMMAND") :
-            tag = parser.symbol()
-            if not st.contains(tag):
-                st.add_entry(tag, lineCount)
-        elif parser.command_type().__eq__("A_COMMAND") :
-            line += "0"
-            if not parser.symbol().isnumeric():
-                if st.contains(parser.symbol()):
-                    line += str(bin(st.get_address(parser.symbol()))[2:].zfill(15))
-                else:
-                    st.add_entry(parser.symbol(), varCount+16)
-                    line += str(bin(st.get_address(parser.symbol()))[2:].zfill(15))
-                    varCount += 1
-            else:
-                line += str(bin(int(parser.symbol()))[2:].zfill(15))
-            lineCount += 1
-        else:
-            line += "111"
-            line += (Code.comp(parser.comp()))
-            line += (Code.dest(parser.dest()))
-            line += (Code.jump(parser.jump()))
-            lineCount += 1
-
+        line, lineCount, varCount = parser.parse_line(lineCount, varCount, st)
         if len(line) != 0:
-            print(parser.current_command+" = "+line)
-            output_file.write(line+"\n")
-
+            output_file.write(line + "\n")
 
 
 if "__main__" == __name__:
@@ -94,4 +70,3 @@ if "__main__" == __name__:
         with open(input_path, 'r') as input_file, \
                 open(output_path, 'w') as output_file:
             assemble_file(input_file, output_file)
-

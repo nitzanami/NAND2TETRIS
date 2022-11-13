@@ -43,8 +43,6 @@ class SymbolTable:
             "SCREEN": 0x4000,
             "KBD": 0x6000
         }
-        for i in range(16):
-            self.values.update({f"R{i}": i})
 
     def add_entry(self, symbol: str, address: int) -> None:
         """Adds the pair (symbol, address) to the table.
