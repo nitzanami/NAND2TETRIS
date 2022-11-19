@@ -6,9 +6,11 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+from Constants import *
 
 
 class Parser:
+
     """
     # Parser
     
@@ -52,10 +54,11 @@ class Parser:
         Args:
             input_file (typing.TextIO): input file.
         """
-        # Your code goes here!
-        # A good place to start is to read all the lines of the input:
-        # input_lines = input_file.read().splitlines()
-        pass
+        self.command_parts = None
+        self.current_command = None
+        self.line = 0
+        # Remove whitespaces and separate lines
+        self.input_lines = [line.split('/')[0] for line in input_file.read() .splitlines() if line.split('//')[0] != '']
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -64,7 +67,7 @@ class Parser:
             bool: True if there are more commands, False otherwise.
         """
         # Your code goes here!
-        pass
+        return self.line < len(self.input_lines)
 
     def advance(self) -> None:
         """Reads the next command from the input and makes it the current 
@@ -72,7 +75,9 @@ class Parser:
         there is no current command.
         """
         # Your code goes here!
-        pass
+        self.current_command = self.input_lines[self.line]
+        self.command_parts = self.current_command.split()
+        self.line += 1
 
     def command_type(self) -> str:
         """
@@ -83,8 +88,25 @@ class Parser:
             "C_PUSH", "C_POP", "C_LABEL", "C_GOTO", "C_IF", "C_FUNCTION",
             "C_RETURN", "C_CALL".
         """
-        # Your code goes here!
-        pass
+        match(self.command_parts[0]):
+            case 'add' | 'sub' | 'neg' | 'eq' | 'gt' | 'lt' | 'and' | 'or' | 'not':
+                return C_ARITHMETIC
+            case 'push':
+                return C_PUSH
+            case 'pop':
+                return C_POP
+            case '':
+                return C_LABEL
+            case '':
+                return C_GOTO
+            case '':
+                return C_IF
+            case '':
+                return C_FUNCTION
+            case '':
+                return C_RETURN
+            case '':
+                return C_CALL
 
     def arg1(self) -> str:
         """
@@ -93,8 +115,9 @@ class Parser:
             "C_ARITHMETIC", the command itself (add, sub, etc.) is returned. 
             Should not be called if the current command is "C_RETURN".
         """
-        # Your code goes here!
-        pass
+        if self.command_type() == C_ARITHMETIC:
+            return self.command_parts[0]
+        return self.command_parts[1]
 
     def arg2(self) -> int:
         """
@@ -103,5 +126,6 @@ class Parser:
             called only if the current command is "C_PUSH", "C_POP", 
             "C_FUNCTION" or "C_CALL".
         """
-        # Your code goes here!
-        pass
+
+        return self.command_parts[2]
+
