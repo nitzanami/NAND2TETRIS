@@ -11,3 +11,6 @@ tools/bin/Hardware Simulator.dat
 tools/bin/CPU Emulator.dat
 tools/bin/Hardware Simulator.dat
 tools/bin/CPU Emulator.dat
+*.pyc
+*.dat
+tools/bin/Virtual Machine Emulator.dat
