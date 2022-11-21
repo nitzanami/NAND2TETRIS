@@ -10,6 +10,16 @@ import typing
 
 class CodeWriter:
     """Translates VM commands into Hack assembly code."""
+    segment_dict = {'local': 'LCL',
+                    'argument': 'ARG',
+                    'this': 'THIS',
+                    'that': 'THAT'}
+    binary_operator_dict = {'add': '+',
+                            'sub': '-',
+                            'and': '&',
+                            'or': '|'}
+    unary_operator_dict = {'neg': '-',
+                           'not': '!'}
 
     def __init__(self, output_stream: typing.TextIO) -> None:
         """Initializes the CodeWriter.
@@ -20,12 +30,13 @@ class CodeWriter:
         # Your code goes here!
         # Note that you can write to output_stream like so:
         # output_stream.write("Hello world! \n")
-        pass
+        self.filename = None
+        self.output_stream = output_stream
 
     def set_file_name(self, filename: str) -> None:
+        self.filename = filename
         """Informs the code writer that the translation of a new VM file is 
         started.
-
         Args:
             filename (str): The name of the VM file.
         """
@@ -40,10 +51,9 @@ class CodeWriter:
         # the function "translate_file" in Main.py using python's os library,
         # For example, using code similar to:
         # input_filename, input_extension = os.path.splitext(os.path.basename(input_file.name))
-        pass
 
     def write_arithmetic(self, command: str) -> None:
-        """Writes assembly code that is the translation of the given 
+        """Writes assembly code that is the translation of the given
         arithmetic command. For the commands eq, lt, gt, you should correctly
         compare between all numbers our computer supports, and we define the
         value "true" to be -1, and "false" to be 0.
@@ -51,8 +61,22 @@ class CodeWriter:
         Args:
             command (str): an arithmetic command.
         """
-        # Your code goes here!
-        pass
+        result = ''
+        match command:
+            case 'add' | 'sub' | 'and' | 'or':
+                result = '@SP\n' \
+                         'M=M-1\n' \
+                         'A=M\n' \
+                         'D=M\n' \
+                         'A=A-1\n' \
+                         f'M=M{self.binary_operator_dict[command]}D\n'
+            case 'neg' | 'not':
+                result = '@SP\n' \
+                         'A=M\n' \
+                         'A=A-1\n' \
+                         f"M={self.unary_operator_dict[command]}M\n"
+
+        self.output_stream.write(result)
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:
         """Writes assembly code that is the translation of the given 
@@ -63,12 +87,41 @@ class CodeWriter:
             segment (str): the memory segment to operate on.
             index (int): the index in the memory segment.
         """
-        # Your code goes here!
+        if command == 'C_PUSH':
+            # put the value to push in D
+            if segment == 'constant':
+                result = f'@{index}\nD=A\n'
+            elif segment == 'static':
+                result = f'@{self.filename}.{index}\nD=M\n'
+            else:
+                if segment == 'temp':
+                    result = f'@5\nD=A\n@{index}\nA=D+A\nD=M\n'
+                else:
+                    result = f'@{self.segment_dict[segment]}\nD=M\n@{index}\nA=A+D\nD=M\n'
+            # do the push
+            result += '@SP\nA=M\nM=D\n@SP\nM=M+1\n'
+        else:  # POP
+            # decrement SP
+            result = '@SP\nM=M-1\n'
+            # if static, complete the pop
+            if segment == 'static':
+                result += f'A=M\nD=M\n@{self.filename}.{index}\nM=D\n'
+            else:
+                # store in D the segment address
+                if segment == 'temp':
+                    result += f'@5\nD=A\n'
+                else:  # local,argument,this,that
+                    result += f'@{self.segment_dict[segment]}\nD=M\n'
+                result += f'@{index}\nD=D+A\n'  # add the offset to find the result address
+                result += '@R13\nM=D\n'  # save the address to write into in R13
+                result += '@SP\nA=M\nD=M\n'  # save the value of pop in D
+                result += '@R13\nA=M\nM=D\n'  # RAM[R13] = D
+        self.output_stream.write(result)
+
         # Note: each reference to "static i" appearing in the file Xxx.vm should
         # be translated to the assembly symbol "Xxx.i". In the subsequent
         # assembly process, the Hack assembler will allocate these symbolic
         # variables to the RAM, starting at address 16.
-        pass
 
     def write_label(self, label: str) -> None:
         """Writes assembly code that affects the label command. 
@@ -84,7 +137,7 @@ class CodeWriter:
         # This is irrelevant for project 7,
         # you will implement this in project 8!
         pass
-    
+
     def write_goto(self, label: str) -> None:
         """Writes assembly code that affects the goto command.
 
@@ -94,7 +147,7 @@ class CodeWriter:
         # This is irrelevant for project 7,
         # you will implement this in project 8!
         pass
-    
+
     def write_if(self, label: str) -> None:
         """Writes assembly code that affects the if-goto command. 
 
@@ -104,7 +157,7 @@ class CodeWriter:
         # This is irrelevant for project 7,
         # you will implement this in project 8!
         pass
-    
+
     def write_function(self, function_name: str, n_vars: int) -> None:
         """Writes assembly code that affects the function command. 
         The handling of each "function Xxx.foo" command within the file Xxx.vm
@@ -124,7 +177,7 @@ class CodeWriter:
         # repeat n_vars times:  // n_vars = number of local variables
         #   push constant 0     // initializes the local variables to 0
         pass
-    
+
     def write_call(self, function_name: str, n_args: int) -> None:
         """Writes assembly code that affects the call command. 
         Let "Xxx.foo" be a function within the file Xxx.vm.
@@ -154,7 +207,7 @@ class CodeWriter:
         # goto function_name    // transfers control to the callee
         # (return_address)      // injects the return address label into the code
         pass
-    
+
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
         # This is irrelevant for project 7,
