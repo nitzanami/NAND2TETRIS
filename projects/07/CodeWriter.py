@@ -8,18 +8,31 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 import typing
 
 
+def generate_label():
+    i = 0
+    while True:
+        i += 1
+        yield "label" + str(i)
+
+    pass
+
+
 class CodeWriter:
     """Translates VM commands into Hack assembly code."""
     segment_dict = {'local': 'LCL',
                     'argument': 'ARG',
                     'this': 'THIS',
-                    'that': 'THAT'}
+                    'that': 'THAT',
+                    }
     binary_operator_dict = {'add': '+',
                             'sub': '-',
                             'and': '&',
                             'or': '|'}
     unary_operator_dict = {'neg': '-',
                            'not': '!'}
+    numeral_operator_dict = {'gt': 'JGT', 'lt': 'JLT', 'eq': 'JEQ'}
+
+    labels = generate_label()
 
     def __init__(self, output_stream: typing.TextIO) -> None:
         """Initializes the CodeWriter.
@@ -75,6 +88,21 @@ class CodeWriter:
                          'A=M\n' \
                          'A=A-1\n' \
                          f"M={self.unary_operator_dict[command]}M\n"
+            case 'eq' | 'lt' | 'gt':
+                label1 = next(self.labels)
+                result = '@SP\n' \
+                         'M=M-1\n' \
+                         'A=M\n' \
+                         'D=M\n' \
+                         'A=A-1\n' \
+                         'D=D-M\n' \
+                         'M=-1\n' \
+                         '@' + label1 + '\n' \
+                                        f"D;{self.numeral_operator_dict[command]}\n" \
+                                        '@SP\n' \
+                                        'A=M-1\n' \
+                                        'M=0\n' \
+                                        '(' + label1 + ')\n'
 
         self.output_stream.write(result)
 
@@ -96,6 +124,13 @@ class CodeWriter:
             else:
                 if segment == 'temp':
                     result = f'@5\nD=A\n@{index}\nA=D+A\nD=M\n'
+                elif segment == 'pointer':
+                    if int(index) == 0 :
+                        result = '@THIS\n'
+                    else:
+                        result = '@THAT\n'
+
+                    result += 'D=M\n'
                 else:
                     result = f'@{self.segment_dict[segment]}\nD=M\n@{index}\nA=A+D\nD=M\n'
             # do the push
@@ -106,10 +141,18 @@ class CodeWriter:
             # if static, complete the pop
             if segment == 'static':
                 result += f'A=M\nD=M\n@{self.filename}.{index}\nM=D\n'
+            elif segment == 'pointer':  # if pointer just change the THAT of THIS value with respect to index
+                result += "//pointer "+str(index)+"\n"
+                result += f'A=M\nD=M\n'
+                if int(index) == 0:
+                    result += '@THIS\nM=D\n'
+                else:
+                    result += '@THAT\nM=D\n'
             else:
                 # store in D the segment address
                 if segment == 'temp':
                     result += f'@5\nD=A\n'
+
                 else:  # local,argument,this,that
                     result += f'@{self.segment_dict[segment]}\nD=M\n'
                 result += f'@{index}\nD=D+A\n'  # add the offset to find the result address
