@@ -30,7 +30,7 @@ class CodeWriter:
                             'or': '|'}
     unary_operator_dict = {'neg': '-',
                            'not': '!'}
-    numeral_operator_dict = {'gt': 'JGT', 'lt': 'JLT', 'eq': 'JEQ'}
+    numeral_operator_dict = {'lt': 'JGT', 'gt': 'JLT', 'eq': 'JEQ'}
 
     labels = generate_label()
 
@@ -89,22 +89,75 @@ class CodeWriter:
                          'A=A-1\n' \
                          f"M={self.unary_operator_dict[command]}M\n"
             case 'eq' | 'lt' | 'gt':
-                label1 = next(self.labels)
-                result = '@SP\n' \
-                         'M=M-1\n' \
-                         'A=M\n' \
-                         'D=M\n' \
-                         'A=A-1\n' \
-                         'D=D-M\n' \
-                         'M=-1\n' \
-                         '@' + label1 + '\n' \
-                                        f"D;{self.numeral_operator_dict[command]}\n" \
-                                        '@SP\n' \
-                                        'A=M-1\n' \
-                                        'M=0\n' \
-                                        '(' + label1 + ')\n'
-
-        self.output_stream.write(result)
+                positive = next(self.labels)
+                done = next(self.labels)
+                default = next(self.labels)
+                yes = next(self.labels)
+                result ='@SP\n'\
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        'A=M\n' \
+                        'D=M\n' \
+                        '@'+positive+'\n' \
+                        'D;JGE\n' \
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        'A=M\n' \
+                        'D=M\n' \
+                        '@SP\n' \
+                        'M=M+1\n' \
+                        '@'+default+'\n' \
+                        'D;JLT\n' \
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        'A=M\n' \
+                        f"M={-1 if command.__eq__('gt') else 0}\n" \
+                        '@'+done+'\n'\
+                        'D;JMP\n' \
+                        '('+positive+')\n' \
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        'A=M\n' \
+                        'D=M\n' \
+                        '@SP\n' \
+                        'M=M+1\n' \
+                        '@'+default+'\n' \
+                        'D;JGE\n' \
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        'A=M\n' \
+                        f"M={-1 if command.__eq__('lt') else 0}\n" \
+                        '@'+done+'\n' \
+                        'D;JMP\n' \
+                        '('+default+')\n' \
+                        '@SP\n' \
+                        'A=M\n' \
+                        'D=M\n' \
+                        'A=A-1\n' \
+                        'D=D-M\n' \
+                        '@'+yes+'\n' \
+                        f'D;{self.numeral_operator_dict[command]}\n' \
+                        '@SP\n' \
+                        'A=M-1\n' \
+                        'M=0\n' \
+                        '@SP\n' \
+                        'M=M+1\n' \
+                        '@'+done+'\n' \
+                        'D;JMP\n' \
+                        '('+yes+')\n' \
+                        '@SP\n' \
+                        'A=M-1\n' \
+                        'M=-1\n' \
+                        '@SP\n' \
+                        'M=M+1\n' \
+                        '@' + done + '\n' \
+                        'D;JMP\n' \
+                        '('+done+')\n' \
+                        '@SP\n' \
+                        'M=M-1\n' \
+                        '@SP\n' \
+                        '@SP\n'
+                self.output_stream.write(result)
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:
         """Writes assembly code that is the translation of the given 
