@@ -89,7 +89,7 @@ class Parser:
             "C_RETURN", "C_CALL".
         """
         match(self.command_parts[0]):
-            case 'add' | 'sub' | 'neg' | 'eq' | 'gt' | 'lt' | 'and' | 'or' | 'not':
+            case 'add' | 'sub' | 'neg' | 'eq' | 'gt' | 'lt' | 'and' | 'or' | 'not' | 'shiftleft' | 'shiftright':
                 return C_ARITHMETIC
             case 'push':
                 return C_PUSH
