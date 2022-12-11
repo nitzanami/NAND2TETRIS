@@ -81,33 +81,32 @@ class CodeWriter:
             command (str): an arithmetic command.
         """
         result = ''
-        match command:
-            case 'add' | 'sub' | 'and' | 'or':
-                result = '@SP\n' \
-                         'M=M-1\n' \
-                         'A=M\n' \
-                         'D=M\n' \
-                         'A=A-1\n' \
-                         f'M=M{self.binary_operator_dict[command]}D\n'
-            case 'neg' | 'not':
-                result = '@SP\n' \
-                         'A=M\n' \
-                         'A=A-1\n' \
-                         f"M={self.unary_operator_dict[command]}M\n"
-            case 'shiftleft' | 'shiftright':
-                result = '@SP\n' \
-                         'A=M\n' \
-                         'A=A-1\n' \
-                         f'M=M{self.unary_operator_dict[command]}'
-            case 'eq' | 'lt' | 'gt':
-                endAddress = next(self.labels)
-                result = f'@{endAddress}\n' \
-                         f'D=A\n' \
-                         f'@R13\n' \
-                         f'M=D\n' \
-                         f'@{command}HANDLER\n' \
-                         f'0;JMP\n' \
-                         f'({endAddress})\n'
+        if command in ['add', 'sub', 'and', 'or']:
+            result = '@SP\n' \
+                     'M=M-1\n' \
+                     'A=M\n' \
+                     'D=M\n' \
+                     'A=A-1\n' \
+                     f'M=M{self.binary_operator_dict[command]}D\n'
+        elif command in [ 'neg' , 'not']:
+            result = '@SP\n' \
+                     'A=M\n' \
+                     'A=A-1\n' \
+                     f"M={self.unary_operator_dict[command]}M\n"
+        elif command in ['shiftleft' , 'shiftright']:
+            result = '@SP\n' \
+                     'A=M\n' \
+                     'A=A-1\n' \
+                     f'M=M{self.unary_operator_dict[command]}\n'
+        elif command in ['eq', 'lt', 'gt']:
+            endAddress = next(self.labels)
+            result = f'@{endAddress}\n' \
+                     f'D=A\n' \
+                     f'@R13\n' \
+                     f'M=D\n' \
+                     f'@{command}HANDLER\n' \
+                     f'0;JMP\n' \
+                     f'({endAddress})\n'
         self.output_stream.write(result)
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:

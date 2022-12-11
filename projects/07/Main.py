@@ -30,11 +30,10 @@ def translate_file(
     while parser.has_more_commands():
         parser.advance()
         output_file.write('//' + parser.current_command + '\n')
-        match parser.command_type():
-            case Constants.C_ARITHMETIC:
-                code_writer.write_arithmetic(parser.arg1())
-            case Constants.C_POP | Constants.C_PUSH:
-                code_writer.write_push_pop(parser.command_type(), parser.command_parts[1], parser.command_parts[2])
+        if parser.command_type() == Constants.C_ARITHMETIC:
+            code_writer.write_arithmetic(parser.arg1())
+        elif parser.command_type() in [Constants.C_POP, Constants.C_PUSH]:
+            code_writer.write_push_pop(parser.command_type(), parser.command_parts[1], parser.command_parts[2])
 
 
 if "__main__" == __name__:
