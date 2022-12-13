@@ -114,7 +114,7 @@ class CodeWriter:
         self.output_stream.write(result)
 
     def write_push_pop(self, command: str, segment: str, index: int) -> None:
-        """Writes assembly code that is the translation of the given
+        """Writes assembly code that is the translation of the given 
         command, where command is either C_PUSH or C_POP.
 
         Args:
@@ -174,7 +174,7 @@ class CodeWriter:
         # variables to the RAM, starting at address 16.
 
     def write_label(self, label: str) -> None:
-        """Writes assembly code that affects the label command.
+        """Writes assembly code that affects the label command. 
         Let "Xxx.foo" be a function within the file Xxx.vm. The handling of
         each "label bar" command within "Xxx.foo" generates and injects the symbol
         "Xxx.foo$bar" into the assembly code stream.
@@ -197,7 +197,7 @@ class CodeWriter:
         self.output_stream.write(f'@{self.get_label_string(label)}\n0;JMP\n')
 
     def write_if(self, label: str) -> None:
-        """Writes assembly code that affects the if-goto command.
+        """Writes assembly code that affects the if-goto command. 
 
         Args:
             label (str): the label to go to.
@@ -207,11 +207,11 @@ class CodeWriter:
         pass
 
     def write_function(self, function_name: str, n_vars: int) -> None:
-        """Writes assembly code that affects the function command.
+        """Writes assembly code that affects the function command. 
         The handling of each "function Xxx.foo" command within the file Xxx.vm
         generates and injects a symbol "Xxx.foo" into the assembly code stream,
         that labels the entry-point to the function's code.
-        In the subsequent assembly process, the assembler translates this
+        In the subsequent assembly process, the assembler translates this 
         symbol into the physical address where the function code starts.
 
         Args:
@@ -227,13 +227,13 @@ class CodeWriter:
         pass
 
     def write_call(self, function_name: str, n_args: int) -> None:
-        """Writes assembly code that affects the call command.
+        """Writes assembly code that affects the call command. 
         Let "Xxx.foo" be a function within the file Xxx.vm.
         The handling of each "call" command within Xxx.foo's code generates and
         injects a symbol "Xxx.foo$ret.i" into the assembly code stream, where
         "i" is a running integer (one such symbol is generated for each "call"
         command within "Xxx.foo").
-        This symbol is used to mark the return address within the caller's
+        This symbol is used to mark the return address within the caller's 
         code. In the subsequent assembly process, the assembler translates this
         symbol into the physical memory address of the command immediately
         following the "call" command.

@@ -10,7 +10,6 @@ from Constants import *
 
 
 class Parser:
-
     """
     # Parser
     
