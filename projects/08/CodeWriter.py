@@ -6,6 +6,7 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+from Constants import *
 
 
 def generate_label():
@@ -14,9 +15,6 @@ def generate_label():
         i += 1
         yield "label" + str(i)
     pass
-
-
-
 
 
 class CodeWriter:
@@ -92,12 +90,12 @@ class CodeWriter:
                      'D=M\n' \
                      'A=A-1\n' \
                      f'M=M{self.binary_operator_dict[command]}D\n'
-        elif command in [ 'neg' , 'not']:
+        elif command in ['neg', 'not']:
             result = '@SP\n' \
                      'A=M\n' \
                      'A=A-1\n' \
                      f"M={self.unary_operator_dict[command]}M\n"
-        elif command in ['shiftleft' , 'shiftright']:
+        elif command in ['shiftleft', 'shiftright']:
             result = '@SP\n' \
                      'A=M\n' \
                      'A=A-1\n' \
@@ -184,9 +182,7 @@ class CodeWriter:
         Args:
             label (str): the label to write.
         """
-        if self.function_name != '':
-            self.output_stream.write(f'({self.get_label_string(label)})\n')
-
+        self.output_stream.write(f'({self.get_label_string(label)})\n')
 
     def write_goto(self, label: str) -> None:
         """Writes assembly code that affects the goto command.
@@ -202,9 +198,12 @@ class CodeWriter:
         Args:
             label (str): the label to go to.
         """
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
-        pass
+        result = '@SP\n' + \
+                 'A=A-1\n' + \
+                 'D=M\n' + \
+                 'A=' + self.get_label_string(label) + '\n' + \
+                 'D;JLT\n'
+        self.output_stream.write(result)
 
     def write_function(self, function_name: str, n_vars: int) -> None:
         """Writes assembly code that affects the function command. 
@@ -218,13 +217,24 @@ class CodeWriter:
             function_name (str): the name of the function.
             n_vars (int): the number of local variables of the function.
         """
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
         # The pseudo-code of "function function_name n_vars" is:
         # (function_name)       // injects a function entry label into the code
         # repeat n_vars times:  // n_vars = number of local variables
         #   push constant 0     // initializes the local variables to 0
-        pass
+        repeatLabel = next(self.labels)
+        self.write_label(function_name)  # write the entry label for the function
+        # push n_vars times constant 0 ==>
+        start_loop = '@R12\n' + \
+                     'M=' + str(n_vars) + '\n' + \
+                     '(' + repeatLabel + ')\n'
+        end_loop = '@R12\n' + \
+                   'M=M-1\n' + \
+                   'D=M\n' + \
+                   '@' + repeatLabel + '\n' + \
+                   'M;JGT\n'
+        self.output_stream.write(start_loop)
+        self.write_push_pop(C_PUSH, 'constant', 0)
+        self.output_stream.write(end_loop)
 
     def write_call(self, function_name: str, n_args: int) -> None:
         """Writes assembly code that affects the call command. 
@@ -254,7 +264,9 @@ class CodeWriter:
         # LCL = SP              // repositions LCL
         # goto function_name    // transfers control to the callee
         # (return_address)      // injects the return address label into the code
-        pass
+
+        return_address = next(self.labels)
+        self.write_push_pop(C_PUSH, 'label', return_address)
 
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
@@ -272,7 +284,7 @@ class CodeWriter:
         # goto return_address           // go to the return address
         pass
 
-    def write_compare_start(self, command:str):
+    def write_compare_start(self, command: str):
         positive = next(self.labels)
         done = next(self.labels)
         default = next(self.labels)
