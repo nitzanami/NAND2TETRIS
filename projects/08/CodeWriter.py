@@ -302,7 +302,28 @@ class CodeWriter:
         # ARG = *(frame-3)              // restores ARG for the caller
         # LCL = *(frame-4)              // restores LCL for the caller
         # goto return_address           // go to the return address
-        pass
+        result = '@LCL\n' \
+                 'D=M\n' \
+                 '=D\n' \
+                 '@frame\nA=A-5\nA=M\nD=M\n' \
+                 '@R13\n' \
+                 'M=D\n' \
+                 '@SP\nA=M\nM=M-1\nD=M\n' \
+                 '@ARG\n' \
+                 'A=M\nM=D\n' \
+                 '@ARG\n' \
+                 'D=M\n' \
+                 '@SP\nM=D+1\n' \
+                 '@frame\nA=A-1\nA=M\nD=M\n' \
+                 '@THAT\nM=D\n' \
+                 '@frame\nA=A-2\nA=M\nD=M\n' \
+                 '@THIS\nM=D\n' \
+                 '@frame\nA=A-3\nA=M\nD=M\n' \
+                 '@ARG\nM=D\n' \
+                 '@frame\nA=A-4\nA=M\nD=M\n' \
+                 '@LCL\nM=D\n' \
+                 '@R13\nA=M'
+
 
     def write_compare_start(self, command: str):
         positive = next(self.labels)
