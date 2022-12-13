@@ -210,9 +210,10 @@ class CodeWriter:
             label (str): the label to go to.
         """
         result = '@SP\n' + \
-                 'A=A-1\n' + \
+                 'M=M-1\n' + \
+                 'A=M\n' \
                  'D=M\n' + \
-                 'A=' + self.get_label_string(label) + '\n' + \
+                 f'@{self.get_label_string(label)}\n' + \
                  'D;JNE\n'
         self.output_stream.write(result)
 
@@ -233,7 +234,7 @@ class CodeWriter:
         # repeat n_vars times:  // n_vars = number of local variables
         #   push constant 0     // initializes the local variables to 0
         repeatLabel = next(self.labels)
-        self.output_stream.write(self.get_function_label_string(function_name))  # write the entry label for the
+        self.output_stream.write(f'({self.get_function_label_string(function_name)})\n')  # write the entry label for the
         # function
         # push n_vars times constant 0 ==>
         start_loop = '@R12\n' + \
