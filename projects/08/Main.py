@@ -10,6 +10,7 @@ import sys
 import typing
 from Parser import Parser
 from CodeWriter import CodeWriter
+from Constants import *
 
 
 def translate_file(
@@ -23,8 +24,30 @@ def translate_file(
         bootstrap (bool): if this is True, the current file is the 
             first file we are translating.
     """
-    # Your code goes here!
-    pass
+    parser = Parser(input_file)
+    code_writer = CodeWriter(output_file)
+    code_writer.set_file_name(os.path.splitext(os.path.basename(input_file.name))[0])
+    while parser.has_more_commands():
+        parser.advance()
+        output_file.write('//' + parser.current_command + '\n')
+        if parser.command_type() == C_ARITHMETIC:
+            code_writer.write_arithmetic(parser.arg1())
+        elif parser.command_type() in [C_POP, C_PUSH]:
+            code_writer.write_push_pop(parser.command_type(), parser.arg1(), parser.arg2())
+        elif parser.command_type() == C_LABEL:
+            code_writer.write_label(parser.arg1())
+        elif parser.command_type() == C_IF:
+            code_writer.write_if(parser.arg1())
+        elif parser.command_type() == C_GOTO:
+            code_writer.write_goto(parser.arg1())
+        elif parser.command_type() == C_FUNCTION:
+            code_writer.set_function(parser.arg1())
+            code_writer.write_function(parser.arg1(), parser.arg2())
+        elif parser.command_type() == C_RETURN:
+            code_writer.set_function('')
+            code_writer.write_return()
+        elif parser.command_type() == C_CALL:
+            code_writer.write_call(parser.arg1(),parser.arg2())
 
 
 if "__main__" == __name__:
