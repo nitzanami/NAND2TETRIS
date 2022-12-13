@@ -106,7 +106,7 @@ class CodeWriter:
                      f'D=A\n' \
                      f'@R13\n' \
                      f'M=D\n' \
-                     f'@{self.compare_label(command)}\n' \
+                     f'@{self.get_compare_label(command)}\n' \
                      f'0;JMP\n' \
                      f'({endAddress})\n'
         self.output_stream.write(result)
@@ -121,55 +121,65 @@ class CodeWriter:
             index (int): the index in the memory segment.
         """
         if command == 'C_PUSH':
-            # put the value to push in D
-            if segment == 'constant':
-                result = f'@{index}\nD=A\n'
-            elif segment == 'static':
-                result = f'@{self.file_name}.{index}\nD=M\n'
-            else:
-                if segment == 'temp':
-                    result = f'@5\nD=A\n@{index}\nA=D+A\nD=M\n'
-                elif segment == 'pointer':
-                    if int(index) == 0:
-                        result = '@THIS\n'
-                    else:
-                        result = '@THAT\n'
-
-                    result += 'D=M\n'
-                else:
-                    result = f'@{self.segment_dict[segment]}\nD=M\n@{index}\nA=A+D\nD=M\n'
-            # do the push
-            result += '@SP\nA=M\nM=D\n@SP\nM=M+1\n'
+            result = self.get_push_string(index, segment)
         else:  # POP
-            # decrement SP
-            result = '@SP\nM=M-1\n'
-            # if static, complete the pop
-            if segment == 'static':
-                result += f'A=M\nD=M\n@{self.file_name}.{index}\nM=D\n'
-            elif segment == 'pointer':  # if pointer just change the THAT of THIS value with respect to index
-                result += "//pointer " + str(index) + "\n"
-                result += f'A=M\nD=M\n'
-                if int(index) == 0:
-                    result += '@THIS\nM=D\n'
-                else:
-                    result += '@THAT\nM=D\n'
-            else:
-                # store in D the segment address
-                if segment == 'temp':
-                    result += f'@5\nD=A\n'
-
-                else:  # local,argument,this,that
-                    result += f'@{self.segment_dict[segment]}\nD=M\n'
-                result += f'@{index}\nD=D+A\n'  # add the offset to find the result address
-                result += '@R13\nM=D\n'  # save the address to write into in R13
-                result += '@SP\nA=M\nD=M\n'  # save the value of pop in D
-                result += '@R13\nA=M\nM=D\n'  # RAM[R13] = D
+            result = self.get_pop_string(index, segment)
         self.output_stream.write(result)
 
         # Note: each reference to "static i" appearing in the file Xxx.vm should
         # be translated to the assembly symbol "Xxx.i". In the subsequent
         # assembly process, the Hack assembler will allocate these symbolic
         # variables to the RAM, starting at address 16.
+
+    def get_pop_string(self, index, segment):
+        # decrement SP
+        result = '@SP\nM=M-1\n'
+        # if static, complete the pop
+        if segment == 'static':
+            result += f'A=M\nD=M\n@{self.file_name}.{index}\nM=D\n'
+        elif segment == 'pointer':  # if pointer just change the THAT of THIS value with respect to index
+            result += "//pointer " + str(index) + "\n"
+            result += f'A=M\nD=M\n'
+            if int(index) == 0:
+                result += '@THIS\nM=D\n'
+            else:
+                result += '@THAT\nM=D\n'
+        else:
+            # store in D the segment address
+            if segment == 'temp':
+                result += f'@5\nD=A\n'
+
+            else:  # local,argument,this,that
+                result += f'@{self.segment_dict[segment]}\nD=M\n'
+            result += f'@{index}\nD=D+A\n'  # add the offset to find the result address
+            result += '@R13\nM=D\n'  # save the address to write into in R13
+            result += '@SP\nA=M\nD=M\n'  # save the value of pop in D
+            result += '@R13\nA=M\nM=D\n'  # RAM[R13] = D
+        return result
+
+    def get_push_string(self, index, segment):
+        # put the value to push in D
+        if segment == 'constant':
+            result = f'@{index}\nD=A\n'
+        elif segment == 'static':
+            result = f'@{self.file_name}.{index}\nD=M\n'
+        elif segment == 'temp':
+            result = f'@5\nD=A\n@{index}\nA=D+A\nD=M\n'
+        elif segment == 'pointer':
+            if int(index) == 0:
+                result = '@THIS\n'
+            else:
+                result = '@THAT\n'
+
+            result += 'D=M\n'
+        elif segment in self.segment_dict.keys():  # if lcl,this,that,argument
+            result = f'@{self.segment_dict[segment]}\nD=M\n@{index}\nA=A+D\nD=M\n'
+        else:  # if segment is a label that we push the address of
+            result = f'@{segment}\nD=A\n'
+
+        # do the push
+        result += '@SP\nA=M\nM=D\n@SP\nM=M+1\n'
+        return result
 
     def write_label(self, label: str) -> None:
         """Writes assembly code that affects the label command. 
@@ -181,6 +191,7 @@ class CodeWriter:
 
         Args:
             label (str): the label to write.
+            @param label:
         """
         self.output_stream.write(f'({self.get_label_string(label)})\n')
 
@@ -202,7 +213,7 @@ class CodeWriter:
                  'A=A-1\n' + \
                  'D=M\n' + \
                  'A=' + self.get_label_string(label) + '\n' + \
-                 'D;JLT\n'
+                 'D;JNE\n'
         self.output_stream.write(result)
 
     def write_function(self, function_name: str, n_vars: int) -> None:
@@ -222,7 +233,8 @@ class CodeWriter:
         # repeat n_vars times:  // n_vars = number of local variables
         #   push constant 0     // initializes the local variables to 0
         repeatLabel = next(self.labels)
-        self.write_label(function_name)  # write the entry label for the function
+        self.output_stream.write(self.get_function_label_string(function_name))  # write the entry label for the
+        # function
         # push n_vars times constant 0 ==>
         start_loop = '@R12\n' + \
                      'M=' + str(n_vars) + '\n' + \
@@ -235,6 +247,9 @@ class CodeWriter:
         self.output_stream.write(start_loop)
         self.write_push_pop(C_PUSH, 'constant', 0)
         self.output_stream.write(end_loop)
+
+    def get_function_label_string(self, function_name):
+        return f'{self.file_name}.{function_name}'
 
     def write_call(self, function_name: str, n_args: int) -> None:
         """Writes assembly code that affects the call command. 
@@ -255,18 +270,23 @@ class CodeWriter:
         # This is irrelevant for project 7,
         # you will implement this in project 8!
         # The pseudo-code of "call function_name n_args" is:
+
+        # (return_address)      // injects the return address label into the code
+
+        return_address = next(self.labels)
         # push return_address   // generates a label and pushes it to the stack
         # push LCL              // saves LCL of the caller
         # push ARG              // saves ARG of the caller
         # push THIS             // saves THIS of the caller
         # push THAT             // saves THAT of the caller
+        for label in [return_address, 'LCL', 'ARG', 'THIS', 'THAT']:
+            self.write_push_pop(C_PUSH, label, 0)
         # ARG = SP-5-n_args     // repositions ARG
+        self.output_stream.write(f'@SP\nD=A\n@5\nD=D-A\n@{n_args}\nD=D-A\n@ARG\nM=D\n')
         # LCL = SP              // repositions LCL
+        self.output_stream.write(f'@SP\nD=M\n@LCL\nM=D\n')
         # goto function_name    // transfers control to the callee
-        # (return_address)      // injects the return address label into the code
-
-        return_address = next(self.labels)
-        self.write_push_pop(C_PUSH, 'label', return_address)
+        self.output_stream.write(f'@{self.get_function_label_string(function_name)}\n0;JMP\n')
 
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
@@ -289,7 +309,7 @@ class CodeWriter:
         done = next(self.labels)
         default = next(self.labels)
         yes = next(self.labels)
-        result = f'({self.compare_label(command)})\n' \
+        result = f'({self.get_compare_label(command)})\n' \
                  f'@SP\n' \
                  'M=M-1\n' \
                  'A=M\n' \
@@ -361,7 +381,7 @@ class CodeWriter:
     def set_function(self, function_name):
         self.function_name = function_name
 
-    def compare_label(self, command):
+    def get_compare_label(self, command):
         return f'{self.file_name}.{command}.HANDLER'
 
     def get_label_string(self, label):
