@@ -10,7 +10,6 @@ from Constants import *
 
 
 class Parser:
-
     """
     # Parser
     
@@ -58,7 +57,7 @@ class Parser:
         self.current_command = None
         self.line = 0
         # Remove whitespaces and separate lines
-        self.input_lines = [line.split('/')[0] for line in input_file.read() .splitlines() if line.split('//')[0] != '']
+        self.input_lines = [line.split('/')[0] for line in input_file.read().splitlines() if line.split('//')[0] != '']
 
     def has_more_commands(self) -> bool:
         """Are there more commands in the input?
@@ -88,25 +87,13 @@ class Parser:
             "C_PUSH", "C_POP", "C_LABEL", "C_GOTO", "C_IF", "C_FUNCTION",
             "C_RETURN", "C_CALL".
         """
-        match(self.command_parts[0]):
-            case 'add' | 'sub' | 'neg' | 'eq' | 'gt' | 'lt' | 'and' | 'or' | 'not' | 'shiftleft' | 'shiftright':
-                return C_ARITHMETIC
-            case 'push':
-                return C_PUSH
-            case 'pop':
-                return C_POP
-            case '':
-                return C_LABEL
-            case '':
-                return C_GOTO
-            case '':
-                return C_IF
-            case '':
-                return C_FUNCTION
-            case '':
-                return C_RETURN
-            case '':
-                return C_CALL
+        if self.command_parts[0] in ['add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not', 'shiftleft',
+                                      'shiftright']:
+            return C_ARITHMETIC
+        elif self.command_parts[0] == 'push':
+            return C_PUSH
+        elif self.command_parts[0] == 'pop':
+            return C_POP
 
     def arg1(self) -> str:
         """
@@ -128,4 +115,3 @@ class Parser:
         """
 
         return self.command_parts[2]
-

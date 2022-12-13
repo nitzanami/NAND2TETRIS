@@ -15,3 +15,5 @@ tools/bin/CPU Emulator.dat
 *.dat
 tools/bin/Virtual Machine Emulator.dat
 *.asm
+*.vm
+*.asm
