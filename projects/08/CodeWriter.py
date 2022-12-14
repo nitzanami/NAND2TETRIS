@@ -51,8 +51,8 @@ class CodeWriter:
         self.write_driver_code()
 
     def write_driver_code(self):
-        self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
-        self.write_call('Sys.init', 0)
+        # self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
+        # self.write_call('Sys.init', 0)
         self.output_stream.write(f'@{self.file_name}.START\n0;JMP\n')
         self.write_compare_start('eq')
         self.write_compare_start('lt')
@@ -242,7 +242,7 @@ class CodeWriter:
         self.output_stream.write(f'({self.get_function_label_string(function_name)})\n')  # write the entry label for the
         # function
         # push n_vars times constant 0 ==>
-        start_loop = '@' + str(n_vars) + '\nD=A\n@R14\nM=A\n' + \
+        start_loop = '@' + str(n_vars) + '\nD=A\n@R14\nM=D\n' + \
                      '(' + repeatLabel + ')\n'
         end_loop = '@R14\n' + \
                    'M=M-1\n' + \
@@ -300,36 +300,40 @@ class CodeWriter:
         # This is irrelevant for project 7,
         # you will implement this in project 8!
         # The pseudo-code of "return" is:
-        # frame = LCL                   // frame is a temporary variable
-        # return_address = *(frame-5)   // puts the return address in a temp var
-        # *ARG = pop()                  // repositions the return value for the caller
-        # SP = ARG + 1                  // repositions SP for the caller
+
+
         # THAT = *(frame-1)             // restores THAT for the caller
         # THIS = *(frame-2)             // restores THIS for the caller
         # ARG = *(frame-3)              // restores ARG for the caller
         # LCL = *(frame-4)              // restores LCL for the caller
         # goto return_address           // go to the return address
+
+        # r14 = frame = LCL                   // frame is a temporary variable
         result = '@LCL\n' \
                  'D=M\n' \
                  '@R14\n' \
-                 'M=D\n' \
-                 '@5\nD=A\n@R14\n' \
-                 'A=M-D\nA=M\nD=M\n' \
+                 'M=D\n'
+        # return_address = *(frame-5)   // puts the return address in a temp var
+        result += '@5\nD=A\n@R14\n' \
+                 'A=M-D\nD=M\n' \
                  '@R13\n' \
-                 'M=D\n' \
-                 '@SP\nA=M\nM=M-1\nD=M\n' \
+                 'M=D\n'
+        # *ARG = pop()                  // repositions the return value for the caller
+        # SP = ARG + 1                  // repositions SP for the caller
+        result += '@SP\nA=M\nA=A-1\nD=M\n' \
                  '@ARG\n' \
                  'A=M\nM=D\n' \
                  '@ARG\n' \
                  'D=M\n' \
-                 '@SP\nM=D+1\n' \
-                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
+                 '@SP\nM=D+1\n'
+
+        result += '@R14\nM=M-1\nA=M\nD=M\n' \
                  '@THAT\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nD=M\n' \
                  '@THIS\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nD=M\n' \
                  '@ARG\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nD=M\n' \
                  '@LCL\nM=D\n' \
                  '@R13\nA=M\nD;JMP\n'
         self.output_stream.write(result)
