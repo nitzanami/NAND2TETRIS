@@ -48,6 +48,11 @@ class CodeWriter:
         self.function_name = None
         self.file_name = None
         self.output_stream = output_stream
+        self.write_driver_code()
+
+    def write_driver_code(self):
+        self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
+        self.write_call('Sys.init', 0)
         self.output_stream.write(f'@{self.file_name}.START\n0;JMP\n')
         self.write_compare_start('eq')
         self.write_compare_start('lt')
@@ -250,6 +255,8 @@ class CodeWriter:
         self.output_stream.write(end_loop)
 
     def get_function_label_string(self, function_name):
+        if function_name == 'Sys.init':
+            return 'Sys.init'
         return f'{self.file_name}.{function_name}'
 
     def write_call(self, function_name: str, n_args: int) -> None:
@@ -327,7 +334,6 @@ class CodeWriter:
                  '@LCL\nM=D\n' \
                  '@R13\nA=M\nD;JMP\n'
         self.output_stream.write(result)
-
 
     def write_compare_start(self, command: str):
         positive = next(self.labels)
