@@ -237,14 +237,13 @@ class CodeWriter:
         self.output_stream.write(f'({self.get_function_label_string(function_name)})\n')  # write the entry label for the
         # function
         # push n_vars times constant 0 ==>
-        start_loop = '@R12\n' + \
-                     'M=' + str(n_vars) + '\n' + \
+        start_loop = '@' + str(n_vars) + '\nD=A\n@R14\nM=A\n' + \
                      '(' + repeatLabel + ')\n'
-        end_loop = '@R12\n' + \
+        end_loop = '@R14\n' + \
                    'M=M-1\n' + \
                    'D=M\n' + \
                    '@' + repeatLabel + '\n' + \
-                   'M;JGT\n'
+                   'D;JGT\n'
         self.output_stream.write(start_loop)
         self.write_push_pop(C_PUSH, 'constant', 0)
         self.output_stream.write(end_loop)
@@ -307,7 +306,7 @@ class CodeWriter:
                  'D=M\n' \
                  '@R14\n' \
                  'M=D\n' \
-                 'D=5\n' \
+                 '@5\nD=A\n@R14\n' \
                  'A=M-D\nA=M\nD=M\n' \
                  '@R13\n' \
                  'M=D\n' \
