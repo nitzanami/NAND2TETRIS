@@ -305,8 +305,10 @@ class CodeWriter:
         # goto return_address           // go to the return address
         result = '@LCL\n' \
                  'D=M\n' \
-                 '=D\n' \
-                 '@frame\nA=A-5\nA=M\nD=M\n' \
+                 '@R14\n' \
+                 'M=D\n' \
+                 'D=5\n' \
+                 'A=M-D\nA=M\nD=M\n' \
                  '@R13\n' \
                  'M=D\n' \
                  '@SP\nA=M\nM=M-1\nD=M\n' \
@@ -315,15 +317,15 @@ class CodeWriter:
                  '@ARG\n' \
                  'D=M\n' \
                  '@SP\nM=D+1\n' \
-                 '@frame\nA=A-1\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
                  '@THAT\nM=D\n' \
-                 '@frame\nA=A-2\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
                  '@THIS\nM=D\n' \
-                 '@frame\nA=A-3\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
                  '@ARG\nM=D\n' \
-                 '@frame\nA=A-4\nA=M\nD=M\n' \
+                 '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
                  '@LCL\nM=D\n' \
-                 '@R13\nA=M'
+                 '@R13\nA=M\nD;JMP\n'
 
 
     def write_compare_start(self, command: str):
