@@ -51,8 +51,8 @@ class CodeWriter:
         self.write_driver_code()
 
     def write_driver_code(self):
-        # self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
-        # self.write_call('Sys.init', 0)
+        self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
+        self.write_call('Sys.init', 0)
         self.output_stream.write(f'@{self.file_name}.START\n0;JMP\n')
         self.write_compare_start('eq')
         self.write_compare_start('lt')
@@ -274,13 +274,13 @@ class CodeWriter:
             function_name (str): the name of the function to call.
             n_args (int): the number of arguments of the function.
         """
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
         # The pseudo-code of "call function_name n_args" is:
 
         # (return_address)      // injects the return address label into the code
 
         return_address = next(self.labels)
+
+        self.output_stream.write(f'({return_address})\n')
         # push return_address   // generates a label and pushes it to the stack
         # push LCL              // saves LCL of the caller
         # push ARG              // saves ARG of the caller
@@ -297,16 +297,6 @@ class CodeWriter:
 
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
-        # This is irrelevant for project 7,
-        # you will implement this in project 8!
-        # The pseudo-code of "return" is:
-
-
-        # THAT = *(frame-1)             // restores THAT for the caller
-        # THIS = *(frame-2)             // restores THIS for the caller
-        # ARG = *(frame-3)              // restores ARG for the caller
-        # LCL = *(frame-4)              // restores LCL for the caller
-        # goto return_address           // go to the return address
 
         # r14 = frame = LCL                   // frame is a temporary variable
         result = '@LCL\n' \
@@ -326,7 +316,11 @@ class CodeWriter:
                  '@ARG\n' \
                  'D=M\n' \
                  '@SP\nM=D+1\n'
-
+        # THAT = *(frame-1)             // restores THAT for the caller
+        # THIS = *(frame-2)             // restores THIS for the caller
+        # ARG = *(frame-3)              // restores ARG for the caller
+        # LCL = *(frame-4)              // restores LCL for the caller
+        # goto return_address           // go to the return address
         result += '@R14\nM=M-1\nA=M\nD=M\n' \
                  '@THAT\nM=D\n' \
                  '@R14\nM=M-1\nA=M\nD=M\n' \
