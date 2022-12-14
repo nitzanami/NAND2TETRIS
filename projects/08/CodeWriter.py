@@ -289,7 +289,7 @@ class CodeWriter:
         for label in [return_address, 'LCL', 'ARG', 'THIS', 'THAT']:
             self.write_push_pop(C_PUSH, label, 0)
         # ARG = SP-5-n_args     // repositions ARG
-        self.output_stream.write(f'@SP\nD=A\n@5\nD=D-A\n@{n_args}\nD=D-A\n@ARG\nM=D\n')
+        self.output_stream.write(f'@SP\nD=M\n@5\nD=D-A\n@{n_args}\nD=D-A\n@ARG\nM=D\n')
         # LCL = SP              // repositions LCL
         self.output_stream.write(f'@SP\nD=M\n@LCL\nM=D\n')
         # goto function_name    // transfers control to the callee
