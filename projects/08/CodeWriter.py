@@ -326,6 +326,7 @@ class CodeWriter:
                  '@R14\nM=M-1\nA=M\nA=M\nD=M\n' \
                  '@LCL\nM=D\n' \
                  '@R13\nA=M\nD;JMP\n'
+        self.output_stream.write(result)
 
 
     def write_compare_start(self, command: str):
