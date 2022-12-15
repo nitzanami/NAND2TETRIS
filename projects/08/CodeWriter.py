@@ -50,11 +50,11 @@ class CodeWriter:
         self.output_stream = output_stream
 
     def write_bootstrap(self):
-        self.output_stream.write(f'@{self.file_name}.START\n0;JMP\n')
+        self.output_stream.write('@START\n0;JMP\n')
         self.write_compare_start('eq')
         self.write_compare_start('lt')
         self.write_compare_start('gt')
-        self.output_stream.write(f'({self.file_name}.START)\n\n')
+        self.output_stream.write('(START)\n\n')
         self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
         self.write_call('Sys.init', 0)
 
@@ -416,5 +416,4 @@ class CodeWriter:
         return f'{command}.HANDLER'
 
     def get_label_string(self, label):
-        return f'{self.file_name}.{self.function_name}${label}'
-
+        return f'{self.function_name}${label}'
