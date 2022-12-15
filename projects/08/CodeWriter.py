@@ -48,16 +48,15 @@ class CodeWriter:
         self.function_name = None
         self.file_name = None
         self.output_stream = output_stream
-        self.write_driver_code()
 
-    def write_driver_code(self):
-        self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
-        self.write_call('Sys.init', 0)
+    def write_bootstrap(self):
         self.output_stream.write(f'@{self.file_name}.START\n0;JMP\n')
         self.write_compare_start('eq')
         self.write_compare_start('lt')
         self.write_compare_start('gt')
-        self.output_stream.write(f'({self.file_name}.START)\n')
+        self.output_stream.write(f'({self.file_name}.START)\n\n')
+        self.output_stream.write(f'@256\nD=A\n@SP\nM=D\n')
+        self.write_call('Sys.init', 0)
 
     def set_file_name(self, filename: str) -> None:
         self.file_name = filename
@@ -143,7 +142,6 @@ class CodeWriter:
         if segment == 'static':
             result += f'A=M\nD=M\n@{self.file_name}.{index}\nM=D\n'
         elif segment == 'pointer':  # if pointer just change the THAT of THIS value with respect to index
-            result += "//pointer " + str(index) + "\n"
             result += f'A=M\nD=M\n'
             if int(index) == 0:
                 result += '@THIS\nM=D\n'
@@ -175,12 +173,14 @@ class CodeWriter:
                 result = '@THIS\n'
             else:
                 result = '@THAT\n'
-
             result += 'D=M\n'
+
         elif segment in self.segment_dict.keys():  # if lcl,this,that,argument
             result = f'@{self.segment_dict[segment]}\nD=M\n@{index}\nA=A+D\nD=M\n'
-        else:  # if segment is a label that we push the address of
-            result = f'@{segment}\nD=A\n'
+        elif segment in ['LCL', 'ARG', 'THIS', 'THAT']:
+            result = f'@{segment}\nD=M\n'
+        else:
+            result = f'@{segment}\nD=A\n'  # if segment is an address that we jump to
 
         # do the push
         result += '@SP\nA=M\nM=D\n@SP\nM=M+1\n'
@@ -239,8 +239,8 @@ class CodeWriter:
         # repeat n_vars times:  // n_vars = number of local variables
         #   push constant 0     // initializes the local variables to 0
         repeatLabel = next(self.labels)
-        self.output_stream.write(f'({self.get_function_label_string(function_name)})\n')  # write the entry label for the
-        # function
+        self.output_stream.write(f'({self.get_function_label_string(function_name)})\n')  # write the entry label for
+        # the function
         # push n_vars times constant 0 ==>
         start_loop = '@' + str(n_vars) + '\nD=A\n@R14\nM=D\n' + \
                      '(' + repeatLabel + ')\n'
@@ -249,11 +249,13 @@ class CodeWriter:
                    'D=M\n' + \
                    '@' + repeatLabel + '\n' + \
                    'D;JGT\n'
-        self.output_stream.write(start_loop)
-        self.write_push_pop(C_PUSH, 'constant', 0)
-        self.output_stream.write(end_loop)
+        if n_vars > 0:
+            self.output_stream.write(start_loop)
+            self.write_push_pop(C_PUSH, 'constant', 0)
+            self.output_stream.write(end_loop)
 
     def get_function_label_string(self, function_name):
+        return function_name
         if function_name == 'Sys.init':
             return 'Sys.init'
         return f'{self.file_name}.{function_name}'
@@ -276,11 +278,8 @@ class CodeWriter:
         """
         # The pseudo-code of "call function_name n_args" is:
 
-        # (return_address)      // injects the return address label into the code
-
         return_address = next(self.labels)
 
-        self.output_stream.write(f'({return_address})\n')
         # push return_address   // generates a label and pushes it to the stack
         # push LCL              // saves LCL of the caller
         # push ARG              // saves ARG of the caller
@@ -292,8 +291,12 @@ class CodeWriter:
         self.output_stream.write(f'@SP\nD=M\n@5\nD=D-A\n@{n_args}\nD=D-A\n@ARG\nM=D\n')
         # LCL = SP              // repositions LCL
         self.output_stream.write(f'@SP\nD=M\n@LCL\nM=D\n')
+
         # goto function_name    // transfers control to the callee
         self.output_stream.write(f'@{self.get_function_label_string(function_name)}\n0;JMP\n')
+
+        # (return_address)      // injects the return address label into the code
+        self.output_stream.write(f'({return_address})\n')
 
     def write_return(self) -> None:
         """Writes assembly code that affects the return command."""
@@ -305,38 +308,38 @@ class CodeWriter:
                  'M=D\n'
         # return_address = *(frame-5)   // puts the return address in a temp var
         result += '@5\nD=A\n@R14\n' \
-                 'A=M-D\nD=M\n' \
-                 '@R13\n' \
-                 'M=D\n'
+                  'A=M-D\nD=M\n' \
+                  '@R13\n' \
+                  'M=D\n'
         # *ARG = pop()                  // repositions the return value for the caller
         # SP = ARG + 1                  // repositions SP for the caller
         result += '@SP\nA=M\nA=A-1\nD=M\n' \
-                 '@ARG\n' \
-                 'A=M\nM=D\n' \
-                 '@ARG\n' \
-                 'D=M\n' \
-                 '@SP\nM=D+1\n'
+                  '@ARG\n' \
+                  'A=M\nM=D\n' \
+                  '@ARG\n' \
+                  'D=M\n' \
+                  '@SP\nM=D+1\n'
         # THAT = *(frame-1)             // restores THAT for the caller
         # THIS = *(frame-2)             // restores THIS for the caller
         # ARG = *(frame-3)              // restores ARG for the caller
         # LCL = *(frame-4)              // restores LCL for the caller
         # goto return_address           // go to the return address
         result += '@R14\nM=M-1\nA=M\nD=M\n' \
-                 '@THAT\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nD=M\n' \
-                 '@THIS\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nD=M\n' \
-                 '@ARG\nM=D\n' \
-                 '@R14\nM=M-1\nA=M\nD=M\n' \
-                 '@LCL\nM=D\n' \
-                 '@R13\nA=M\nD;JMP\n'
+                  '@THAT\nM=D\n' \
+                  '@R14\nM=M-1\nA=M\nD=M\n' \
+                  '@THIS\nM=D\n' \
+                  '@R14\nM=M-1\nA=M\nD=M\n' \
+                  '@ARG\nM=D\n' \
+                  '@R14\nM=M-1\nA=M\nD=M\n' \
+                  '@LCL\nM=D\n' \
+                  '@R13\nA=M\nD;JMP\n'
         self.output_stream.write(result)
 
     def write_compare_start(self, command: str):
-        positive = next(self.labels)
-        done = next(self.labels)
-        default = next(self.labels)
-        yes = next(self.labels)
+        positive = f'positive.{command}'
+        done = f'done.{command}'
+        default = f'default.{command}'
+        yes = f'yes.{command}'
         result = f'({self.get_compare_label(command)})\n' \
                  f'@SP\n' \
                  'M=M-1\n' \
@@ -410,7 +413,8 @@ class CodeWriter:
         self.function_name = function_name
 
     def get_compare_label(self, command):
-        return f'{self.file_name}.{command}.HANDLER'
+        return f'{command}.HANDLER'
 
     def get_label_string(self, label):
         return f'{self.file_name}.{self.function_name}${label}'
+

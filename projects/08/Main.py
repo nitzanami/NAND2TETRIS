@@ -26,6 +26,8 @@ def translate_file(
     """
     parser = Parser(input_file)
     code_writer = CodeWriter(output_file)
+    if bootstrap:
+        code_writer.write_bootstrap()
     code_writer.set_file_name(os.path.splitext(os.path.basename(input_file.name))[0])
     while parser.has_more_commands():
         parser.advance()
@@ -42,7 +44,7 @@ def translate_file(
             code_writer.write_goto(parser.arg1())
         elif parser.command_type() == C_FUNCTION:
             code_writer.set_function(parser.arg1())
-            code_writer.write_function(parser.arg1(), parser.arg2())
+            code_writer.write_function(parser.arg1(), int(parser.arg2()))
         elif parser.command_type() == C_RETURN:
             code_writer.set_function('')
             code_writer.write_return()
