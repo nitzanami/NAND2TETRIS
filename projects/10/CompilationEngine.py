@@ -6,14 +6,14 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
-
+import JackTokenizer
 
 class CompilationEngine:
     """Gets input from a JackTokenizer and emits its parsed structure into an
     output stream.
     """
 
-    def __init__(self, input_stream: "JackTokenizer", output_stream) -> None:
+    def __init__(self, input_stream: JackTokenizer, output_stream) -> None:
         """
         Creates a new compilation engine with the given input and output. The
         next routine called must be compileClass()
@@ -407,21 +407,21 @@ class CompilationEngine:
 
     # gets the current token from the tokenizer, regardless of type, and advances the tokenizer
     def get_token(self):
-        ret
-        if self.input_stream.token_type == "KEYWORD":
+        ret =''
+        if self.input_stream.token_type() == "KEYWORD":
             ret = self.input_stream.keyword()
-        if self.input_stream.token_type == "SYMBOL":
+        if self.input_stream.token_type() == "SYMBOL":
             ret = self.input_stream.symbol()
-        if self.input_stream.token_type == "IDENTIFIER":
+        if self.input_stream.token_type() == "IDENTIFIER":
             ret = self.input_stream.identifier()
-        if self.input_stream.token_type == "INT_CONST":
+        if self.input_stream.token_type() == "INT_CONST":
             ret = self.input_stream.int_val()
-        if self.input_stream.token_type == "STRING_CONST":
+        if self.input_stream.token_type() == "STRING_CONST":
             ret = self.input_stream.string_val()
         self.input_stream.advance()
         return ret
 
-    def write_terminal_exp(self, type: String, keyword: String) -> None:
+    def write_terminal_exp(self, type: str, keyword: str) -> None:
         self.output_stream.write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
 
     def write_type(self): # !!!!!! NEED TO BE DONE !!!!!
