@@ -6,6 +6,11 @@ as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
+import re
+
+
+def is_white_space(c):
+    return c in [' ', '\t']
 
 
 class JackTokenizer:
@@ -92,16 +97,27 @@ class JackTokenizer:
     Note that ^, # correspond to shiftleft and shiftright, respectively.
     """
 
+    keywords = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char',
+                'boolean', 'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
+    symbols = '{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#'
+
     def __init__(self, input_stream: typing.TextIO) -> None:
         """Opens the input stream and gets ready to tokenize it.
 
         Args:
             input_stream (typing.TextIO): input stream.
         """
-        # Your code goes here!
-        # A good place to start is to read all the lines of the input:
-        # input_lines = input_stream.read().splitlines()
-        pass
+
+        input_text = input_stream.read()
+        input_text = re.sub('/[*][*]?.*?[*]/', '', input_text)
+        self.input_lines = []
+        for line in input_text.splitlines():
+            line = line.strip()
+            if not (line.startswith('//') or line == ''):
+                self.input_lines.append(line.strip())
+        self.currLine = 0
+        self.currIndex = 0
+        self.currentToken = None
 
     def has_more_tokens(self) -> bool:
         """Do we have more tokens in the input?
@@ -109,16 +125,47 @@ class JackTokenizer:
         Returns:
             bool: True if there are more tokens, False otherwise.
         """
-        # Your code goes here!
-        pass
+        return self.currLine < len(self.input_lines)
 
     def advance(self) -> None:
         """Gets the next token from the input and makes it the current token. 
         This method should be called if has_more_tokens() is true. 
         Initially there is no current token.
         """
-        # Your code goes here!
-        pass
+        if self.has_more_tokens():
+            line = self.input_lines[self.currLine]
+            tokenString = ''
+            while self.currIndex < len(line) and is_white_space(line[self.currIndex]):
+                self.increment()
+
+            if line[self.currIndex] == '"':
+                tokenString = '"'
+                self.increment()
+
+                while self.currIndex < len(line):
+                    tokenString += line[self.currIndex]
+                    self.increment()
+                    if line[self.currIndex - 1] == '"':
+                        self.currentToken = tokenString
+                        return
+
+            while self.currIndex < len(line):
+                if is_white_space(line[self.currIndex]) or line[self.currIndex] in JackTokenizer.symbols:
+                    break
+                tokenString += line[self.currIndex]
+                self.increment()
+
+            if line[self.currIndex] in JackTokenizer.symbols and tokenString == '':
+                tokenString = line[self.currIndex]
+                self.increment()
+
+            self.currentToken = tokenString
+
+    def increment(self):
+        self.currIndex += 1
+        if self.currIndex == len(self.input_lines[self.currLine]):
+            self.currIndex = 0
+            self.currLine += 1
 
     def token_type(self) -> str:
         """
@@ -126,8 +173,17 @@ class JackTokenizer:
             str: the type of the current token, can be
             "KEYWORD", "SYMBOL", "IDENTIFIER", "INT_CONST", "STRING_CONST"
         """
-        # Your code goes here!
-        pass
+        token = self.currentToken
+        if token in JackTokenizer.symbols:
+            return "SYMBOL"
+        if token in JackTokenizer.keywords:
+            return "KEYWORD"
+        if token[0] == '"':
+            return "STRING_CONST"
+        if 'A' <= token[0] <= 'z':
+            return "IDENTIFIER"
+        if '0' <= token[0] <= '9':
+            return "INT_CONST"
 
     def keyword(self) -> str:
         """
@@ -138,8 +194,8 @@ class JackTokenizer:
             "BOOLEAN", "CHAR", "VOID", "VAR", "STATIC", "FIELD", "LET", "DO", 
             "IF", "ELSE", "WHILE", "RETURN", "TRUE", "FALSE", "NULL", "THIS"
         """
-        # Your code goes here!
-        pass
+        if self.token_type() == "KEYWORD":
+            return self.currentToken.upper()
 
     def symbol(self) -> str:
         """
@@ -150,8 +206,7 @@ class JackTokenizer:
             symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
-        # Your code goes here!
-        pass
+        return self.currentToken
 
     def identifier(self) -> str:
         """
@@ -163,8 +218,7 @@ class JackTokenizer:
                   starting with a digit. You can assume keywords cannot be
                   identifiers, so 'self' cannot be an identifier, etc'.
         """
-        # Your code goes here!
-        pass
+        return self.currentToken
 
     def int_val(self) -> int:
         """
@@ -174,8 +228,7 @@ class JackTokenizer:
             Recall that integerConstant was defined in the grammar like so:
             integerConstant: A decimal number in the range 0-32767.
         """
-        # Your code goes here!
-        pass
+        return self.currentToken
 
     def string_val(self) -> str:
         """
@@ -186,5 +239,4 @@ class JackTokenizer:
             StringConstant: '"' A sequence of Unicode characters not including 
                       double quote or newline '"'
         """
-        # Your code goes here!
-        pass
+        return self.currentToken.replace('"', '')
