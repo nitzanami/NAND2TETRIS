@@ -405,28 +405,33 @@ class CompilationEngine:
         elif token_type == "KEYWORD":
             self.write_terminal_exp("keyword",self.get_token())
         # (unaryOp term) | '(' expression ')'
-        elif self.input_stream.currentToken in self.input_stream.binary_operators:
+        elif token_type == "SYMBOL":
             token = self.get_token()
             self.write_terminal_exp("symbol", token)
-            # ( expression )
+            # '(' expression ')'
             if token =='(':
                 self.compile_expression()
                 self.write_terminal_exp("symbol",self.get_token())
-        #
+            # (unaryOp term)
+            else:
+                self.write_terminal_exp("symbol",self.get_token())
+                self.compile_term()
+        # starts with identifier
         else:
             var = self.get_token()
-            self.write_terminal_exp("identifier", var)
             # '[' expression ']'
             if self.input_stream.currentToken == '[':
+                self.write_terminal_exp("identifier", var)
                 self.write_terminal_exp("symbol", self.get_token())
                 self.compile_expression()
                 self.write_terminal_exp("symbol",self.get_token())
-            # '(' subroutineCall ')'
-            elif self.input_stream.currentToken == '(':
-                self.write_terminal_exp("symbol", self.get_token())
-                self.compile_subroutine_call()
-                self.write_terminal_exp("symbol",self.get_token())
+            # subroutineCall
+            elif self.input_stream.currentToken in ['(','.']:
+                self.compile_subroutine_call(var)
             else:
+                self.write_terminal_exp("identifier", var)
+
+
 
 
 
@@ -434,7 +439,7 @@ class CompilationEngine:
 
         pass
 
-    def compile_subroutine_call(self) -> None:
+    def compile_subroutine_call(self,name = None) -> None:
         """Compiles a subroutine call"""
         # start the subroutineCall block
         self.output_stream.write(self.initial_space + "<subroutineCall>\n")
@@ -443,7 +448,7 @@ class CompilationEngine:
         # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
 
         # subroutine name | (className|varName) - they are both identifiers
-        self.write_terminal_exp("identifier", self.get_token())
+        self.write_terminal_exp("identifier", name if name is not None else self.get_token())
 
         # search for a '.', if found, implement option 2
 
