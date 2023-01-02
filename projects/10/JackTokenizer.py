@@ -208,6 +208,10 @@ class JackTokenizer:
             symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
+        if(self.currentToken == '<'):
+            return '&lt;'
+        if (self.currentToken == '>'):
+            return '&gt;'
         return self.currentToken
 
     def identifier(self) -> str:
