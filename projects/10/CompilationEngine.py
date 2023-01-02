@@ -425,7 +425,10 @@ class CompilationEngine:
         self.output_stream.write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
 
     def write_type(self): # !!!!!! NEED TO BE DONE !!!!!
-        pass
+        if self.input_stream.keyword in {"char", "int", "boolean"}:
+            self.write_terminal_exp("keyword", self.get_token())
+        else:
+            self.write_terminal_exp("identifier", self.get_token())
 
     def write_subroutine_body(self): # done !
         # start the subroutineBody block
