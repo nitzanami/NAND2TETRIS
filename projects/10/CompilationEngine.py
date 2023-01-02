@@ -397,7 +397,41 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        # Your code goes here!
+        token_type = self.input_stream.token_type()
+        if token_type  == "INT_CONST":
+            self.write_terminal_exp("integerConstant",self.get_token())
+        elif token_type == "STRING_CONST":
+            self.write_terminal_exp("stringConstant",self.get_token())
+        elif token_type == "KEYWORD":
+            self.write_terminal_exp("keyword",self.get_token())
+        # (unaryOp term) | '(' expression ')'
+        elif self.input_stream.currentToken in self.input_stream.binary_operators:
+            token = self.get_token()
+            self.write_terminal_exp("symbol", token)
+            # ( expression )
+            if token =='(':
+                self.compile_expression()
+                self.write_terminal_exp("symbol",self.get_token())
+        #
+        else:
+            var = self.get_token()
+            self.write_terminal_exp("identifier", var)
+            # '[' expression ']'
+            if self.input_stream.currentToken == '[':
+                self.write_terminal_exp("symbol", self.get_token())
+                self.compile_expression()
+                self.write_terminal_exp("symbol",self.get_token())
+            # '(' subroutineCall ')'
+            elif self.input_stream.currentToken == '(':
+                self.write_terminal_exp("symbol", self.get_token())
+                self.compile_subroutine_call()
+                self.write_terminal_exp("symbol",self.get_token())
+            else:
+
+
+
+
+
         pass
 
     def compile_subroutine_call(self) -> None:
