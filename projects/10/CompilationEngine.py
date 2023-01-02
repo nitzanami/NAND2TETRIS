@@ -24,6 +24,7 @@ class CompilationEngine:
         # set the parameters of the class
         self.output_stream = output_stream
         self.input_stream = input_stream
+        self.input_stream.advance()
         self.initial_space = ""
 
         # call compile class - each jack code must begin wth a class
@@ -371,8 +372,20 @@ class CompilationEngine:
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
-        # Your code goes here!
-        pass
+        # start the expression block
+        self.output_stream.write(self.initial_space + "<expression>\n")
+        self.increase_initial_space()
+
+        # term
+        self.compile_term()
+        while self.input_stream.currentToken in self.input_stream.binary_operators:
+            # op
+            self.write_terminal_exp("symbol",self.get_token())
+            # term
+            self.compile_term()
+        # end the expression block
+        self.decrease_initial_space()
+        self.output_stream.write(self.initial_space + "</expression>\n")
 
     def compile_term(self) -> None:
         """Compiles a term. 

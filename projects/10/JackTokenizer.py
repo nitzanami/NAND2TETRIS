@@ -99,7 +99,9 @@ class JackTokenizer:
 
     keywords = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char',
                 'boolean', 'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
-    symbols = '{', '}', '(', ')', '[', ']', '.', ',', ';', '+', '-', '*', '/', '&', '|', '<', '>', '=', '~', '^', '#'
+    binary_operations = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
+    unary_operations = ['~','-']
+    symbols = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '^', '#'] + binary_operations + unary_operations
 
     def __init__(self, input_stream: typing.TextIO) -> None:
         """Opens the input stream and gets ready to tokenize it.
