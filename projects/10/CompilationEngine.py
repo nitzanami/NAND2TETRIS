@@ -402,12 +402,63 @@ class CompilationEngine:
 
     def compile_subroutine_call(self) -> None:
         """Compiles a subroutine call"""
-        # Your code here!
+        # start the subroutineCall block
+        self.output_stream.write(self.initial_space + "<subroutineCall>\n")
+        self.increase_initial_space()
+
+        # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
+
+        # subroutine name | (className|varName) - they are both identifiers
+        self.write_terminal_exp("identifier", self.get_token())
+
+        # search for a '.', if found, implement option 2
+
+        if self.input_stream.symbol == ".":
+            # scenario - (className|varName)'.'subroutineNAme'('expressionList')'
+
+            # '.' - symbol
+            self.write_terminal_exp("symbol", self.get_token())
+
+            # subroutineName - identifier
+            self.write_terminal_exp("identifier", self.get_token())
+
+        # '('
+        self.write_terminal_exp("symbol", self.get_token())
+
+        # expression list
+        self.compile_expression_list()
+
+        # ')'
+        self.write_terminal_exp("symbol", self.get_token())
+
+        # end the subroutineCall block
+        self.decrease_initial_space()
+        self.output_stream.write(self.initial_space + "</subroutineCall>\n")
+
         pass
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
-        # Your code goes here!
+        # start the expressionList block
+        self.output_stream.write(self.initial_space + "<expressionList>\n")
+        self.increase_initial_space()
+
+        # if there is no expression in the expressionList we expect to find ')' or ']' of '}'
+        if self.input_stream.token_type != "SYMBOL" or not self.input_stream.symbol in {")", "]", "}"}:
+            # expression
+            self.compile_expression()
+
+            # (','expression)*
+            while self.input_stream.token_type == "symbol" and self.input_stream.symbol == ",":
+                # ',' - symbol
+                self.write_terminal_exp("symbol", self.get_token())
+
+                # expression
+                self.compile_expression()
+
+        # end the expressionList block
+        self.decrease_initial_space()
+        self.output_stream.write(self.initial_space + "</expressionList>\n")
         pass
 
     # ================================================HELPERS FUNCTIONS=================================================
