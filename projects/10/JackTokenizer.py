@@ -116,7 +116,6 @@ class JackTokenizer:
         for line in input_text.splitlines():
             line = line.strip().split('//')[0]
             if not line == '':
-                print(line)
                 self.input_lines.append(line.strip())
         self.currLine = 0
         self.currIndex = 0
