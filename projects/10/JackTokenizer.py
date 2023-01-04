@@ -111,11 +111,12 @@ class JackTokenizer:
         """
 
         input_text = input_stream.read()
-        input_text = re.sub('/[*][*]?.*?[*]/', '', input_text)
+        input_text = re.sub('/(\*\*|\*)(.|\n)*?\*/', '', input_text)
         self.input_lines = []
         for line in input_text.splitlines():
-            line = line.strip()
-            if not (line.startswith('//') or line == ''):
+            line = line.strip().split('//')[0]
+            if not line == '':
+                print(line)
                 self.input_lines.append(line.strip())
         self.currLine = 0
         self.currIndex = 0
@@ -208,9 +209,11 @@ class JackTokenizer:
             symbol: '{' | '}' | '(' | ')' | '[' | ']' | '.' | ',' | ';' | '+' | 
               '-' | '*' | '/' | '&' | '|' | '<' | '>' | '=' | '~' | '^' | '#'
         """
-        if(self.currentToken == '<'):
+        if self.currentToken == '&':
+            return '&amp;'
+        if self.currentToken == '<':
             return '&lt;'
-        if (self.currentToken == '>'):
+        if self.currentToken == '>':
             return '&gt;'
         return self.currentToken
 

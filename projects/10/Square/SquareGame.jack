@@ -5,8 +5,7 @@
 
 // (same as projects/09/Square/SquareGame.jack)
 
-/**
- * Implements the Square Dance game.
+/** Implements the Square Dance game.
  * This simple game allows the user to move a black square around
  * the screen, and change the square's size during the movement.
  * When the game starts, a square of 30 by 30 pixels is shown at the

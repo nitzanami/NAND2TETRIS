@@ -48,7 +48,7 @@ class CompilationEngine:
         # classVarDec*
         # for each iteration check if the next item is another classVarDec*
         # do that by checking if its starts with "static" or "field"
-        while self.input_stream.keyword()== "field" or self.input_stream.keyword()== "static":
+        while self.input_stream.keyword()== "FIELD" or self.input_stream.keyword()== "STATIC":
             self.compile_class_var_dec()
 
         # subroutineDec*
@@ -146,13 +146,14 @@ class CompilationEngine:
 
         # while the next token is not ")", continue
         # type varName
-        if not (self.input_stream.token_type()== "SYMBOL" and self.input_stream.symbol() == ")"):
+        if not (self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ")"):
             self.write_type()
             self.write_terminal_exp("identifier", self.get_token())
 
             # ("," type varName)*
-            while self.input_stream.token_type()== "SYMBOL" and not self.input_stream.symbol() == ")":
+            while self.input_stream.token_type() == "SYMBOL" and not self.input_stream.symbol() == ")":
                 self.write_terminal_exp("symbol", self.get_token())
+                self.write_type()
                 self.write_terminal_exp("identifier", self.get_token())
 
         # end the parameterList block
@@ -335,7 +336,7 @@ class CompilationEngine:
         # start the ifStatement block
         self.output_stream.write(self.initial_space + "<ifStatement>\n")
         self.increase_initial_space()
-
+        self.write_terminal_exp("keyword",self.get_token())
         # "("
         self.write_terminal_exp("symbol", self.get_token())
 
@@ -356,7 +357,7 @@ class CompilationEngine:
 
         # ("else" "{" statements "}")?
         # search for "else"
-        if self.input_stream.keyword()== "else":
+        if self.input_stream.keyword()== "ELSE":
             # "else"
             self.write_terminal_exp("keyword", self.get_token())
 
@@ -420,7 +421,7 @@ class CompilationEngine:
                 self.write_terminal_exp("symbol",self.get_token())
             # (unaryOp term)
             else:
-                self.write_terminal_exp("symbol",self.get_token())
+                # self.write_terminal_exp("symbol",self.get_token())
                 self.compile_term()
         # starts with identifier
         else:
@@ -491,7 +492,7 @@ class CompilationEngine:
             self.compile_expression()
 
             # (','expression)*
-            while self.input_stream.token_type()== "symbol" and self.input_stream.symbol()== ",":
+            while self.input_stream.token_type()== "SYMBOL" and self.input_stream.symbol()== ",":
                 # ',' - symbol
                 self.write_terminal_exp("symbol", self.get_token())
 
@@ -530,8 +531,8 @@ class CompilationEngine:
     def write_terminal_exp(self, type: str, keyword: str) -> None:
         self.output_stream.write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
 
-    def write_type(self): # !!!!!! NEED TO BE DONE !!!!!
-        if self.input_stream.keyword()in {"CHAR", "INT", "BOOLEAN"}:
+    def write_type(self):
+        if self.input_stream.keyword() in {"CHAR", "INT", "BOOLEAN"}:
             self.write_terminal_exp("keyword", self.get_token())
         else:
             self.write_terminal_exp("identifier", self.get_token())
