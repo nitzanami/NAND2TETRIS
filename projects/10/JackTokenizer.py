@@ -100,7 +100,7 @@ class JackTokenizer:
     keywords = ['class', 'constructor', 'function', 'method', 'field', 'static', 'var', 'int', 'char',
                 'boolean', 'void', 'true', 'false', 'null', 'this', 'let', 'do', 'if', 'else', 'while', 'return']
     binary_operations = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
-    unary_operations = ['~','-']
+    unary_operations = ['~','-','^','#']
     symbols = ['{', '}', '(', ')', '[', ']', '.', ',', ';', '^', '#'] + binary_operations + unary_operations
 
     def __init__(self, input_stream: typing.TextIO) -> None:
@@ -111,7 +111,7 @@ class JackTokenizer:
         """
 
         input_text = input_stream.read()
-        input_text = re.sub('/(\*\*|\*)(.|\n)*?\*/', '', input_text)
+        input_text = re.sub('/(\*\*|\*)(.|\n)*?\*/', ' ', input_text)
         self.input_lines = []
         for line in input_text.splitlines():
             line = line.strip().split('//')[0]
