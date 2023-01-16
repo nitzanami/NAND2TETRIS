@@ -101,6 +101,8 @@ class VMWriter:
     def __write(self, string):
         self.output.write(string+'\n')
 
+    def write(self, string):
+        self.output.write(string + '\n')
 
 if __name__ == "__main__":
     writer = VMWriter(sys.stdout)

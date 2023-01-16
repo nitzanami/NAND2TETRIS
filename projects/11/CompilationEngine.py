@@ -31,8 +31,8 @@ class CompilationEngine:
         self.input_stream.advance()
         self.initial_space = ""
         # call compile class - each jack code must begin wth a class
-        # self.compile_class()
-        self.compile_do()
+        self.compile_class()
+        #self.compile_do()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
 
     def compile_class(self) -> None: # done!
@@ -134,7 +134,7 @@ class CompilationEngine:
 
         # end the subroutine block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</subroutineDec>\n")
+        self.output_stream.write(self.initial_space + "</subroutineDec>\n")
 
         pass
         """
@@ -165,7 +165,7 @@ class CompilationEngine:
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
         # start the varDec block
-        self.output_stream.__write(self.initial_space + "<varDec>\n")
+        self.output_stream.write(self.initial_space + "<varDec>\n")
         self.increase_initial_space()
 
         # "var"
@@ -187,7 +187,7 @@ class CompilationEngine:
 
         # end the varDec block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</varDec>\n")
+        self.output_stream.write(self.initial_space + "</varDec>\n")
         pass
 
     def compile_statements(self) -> None:
@@ -195,7 +195,7 @@ class CompilationEngine:
         "{}".
         """
         # start the statements block
-        self.output_stream.__write(self.initial_space + "<statements>\n")
+        self.output_stream.write(self.initial_space + "<statements>\n")
         self.increase_initial_space()
 
         # statement*
@@ -215,14 +215,14 @@ class CompilationEngine:
 
         # end the statements block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</statements>\n")
+        self.output_stream.write(self.initial_space + "</statements>\n")
 
 
 
     def compile_do(self) -> None:
         """Compiles a do statement."""
         # start the doStatement block
-        self.output_stream.__write(self.initial_space + "<doStatement>\n")
+        self.output_stream.write(self.initial_space + "<doStatement>\n")
         self.increase_initial_space()
 
         # "do"
@@ -236,13 +236,13 @@ class CompilationEngine:
 
         # end the doStatement block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</doStatement>\n")
+        self.output_stream.write(self.initial_space + "</doStatement>\n")
 
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
         # start the letStatement block
-        self.output_stream.__write(self.initial_space + "<letStatement>\n")
+        self.output_stream.write(self.initial_space + "<letStatement>\n")
         self.increase_initial_space()
 
         # "let"
@@ -274,14 +274,14 @@ class CompilationEngine:
 
         # end the letStatement block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</letStatement>\n")
+        self.output_stream.write(self.initial_space + "</letStatement>\n")
 
         pass
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
         # start the whileStatement block
-        self.output_stream.__write(self.initial_space + "<whileStatement>\n")
+        self.output_stream.write(self.initial_space + "<whileStatement>\n")
         self.increase_initial_space()
 
         # while
@@ -307,13 +307,13 @@ class CompilationEngine:
 
         # end the whileStatement block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</whileStatement>\n")
+        self.output_stream.write(self.initial_space + "</whileStatement>\n")
         pass
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
         # start the returnStatement block
-        self.output_stream.__write(self.initial_space + "<returnStatement>\n")
+        self.output_stream.write(self.initial_space + "<returnStatement>\n")
         self.increase_initial_space()
 
         # "return"
@@ -330,13 +330,13 @@ class CompilationEngine:
 
         # end the returnStatement block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</returnStatement>\n")
+        self.output_stream.write(self.initial_space + "</returnStatement>\n")
 
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
         # start the ifStatement block
-        self.output_stream.__write(self.initial_space + "<ifStatement>\n")
+        self.output_stream.write(self.initial_space + "<ifStatement>\n")
         self.increase_initial_space()
         self.write_terminal_exp("keyword",self.get_token())
         # "("
@@ -374,12 +374,12 @@ class CompilationEngine:
 
         # end the ifStatement block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</ifStatement>\n")
+        self.output_stream.write(self.initial_space + "</ifStatement>\n")
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
         # start the expression block
-        self.output_stream.__write(self.initial_space + "<expression>\n")
+        self.output_stream.write(self.initial_space + "<expression>\n")
         self.increase_initial_space()
 
         # term
@@ -391,7 +391,7 @@ class CompilationEngine:
             self.compile_term()
         # end the expression block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</expression>\n")
+        self.output_stream.write(self.initial_space + "</expression>\n")
 
     def compile_term(self) -> None:
         """Compiles a term. 
@@ -403,7 +403,7 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        self.output_stream.__write(self.initial_space + "<term>\n")
+        self.output_stream.write(self.initial_space + "<term>\n")
         self.increase_initial_space()
 
         token_type = self.input_stream.token_type()
@@ -441,13 +441,13 @@ class CompilationEngine:
                 self.write_terminal_exp("identifier", var)
 
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</term>\n")
+        self.output_stream.write(self.initial_space + "</term>\n")
 
     def compile_subroutine_call(self,name = None) -> None:
         """Compiles a subroutine call"""
         # start the subroutineCall block
         if name is None and False:
-            self.output_stream.__write(self.initial_space + "<subroutineCall>\n")
+            self.output_stream.write(self.initial_space + "<subroutineCall>\n")
             self.increase_initial_space()
 
         # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
@@ -478,14 +478,14 @@ class CompilationEngine:
         # end the subroutineCall block
         if name is None and False:
             self.decrease_initial_space()
-            self.output_stream.__write(self.initial_space + "</subroutineCall>\n")
+            self.output_stream.write(self.initial_space + "</subroutineCall>\n")
 
         pass
 
     def compile_expression_list(self) -> None:
         """Compiles a (possibly empty) comma-separated list of expressions."""
         # start the expressionList block
-        self.output_stream.__write(self.initial_space + "<expressionList>\n")
+        self.output_stream.write(self.initial_space + "<expressionList>\n")
         self.increase_initial_space()
 
         # if there is no expression in the expressionList we expect to find ')' or ']' of '}'
@@ -503,7 +503,7 @@ class CompilationEngine:
 
         # end the expressionList block
         self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</expressionList>\n")
+        self.output_stream.write(self.initial_space + "</expressionList>\n")
         pass
 
     # ================================================HELPERS FUNCTIONS=================================================
@@ -531,7 +531,7 @@ class CompilationEngine:
         return ret
 
     def write_terminal_exp(self, type: str, keyword: str) -> None:
-        self.output_stream.__write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
+        self.output_stream.write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
 
     def write_type(self):
         # if self.input_stream.keyword() in {"CHAR", "INT", "BOOLEAN"}:
@@ -542,12 +542,9 @@ class CompilationEngine:
         return self.get_token()
 
     def write_subroutine_body(self): # done !
-        # start the subroutineBody block
-        self.output_stream.__write(self.initial_space + "<subroutineBody>\n")
-        self.increase_initial_space()
 
-        # "{"
-        self.write_terminal_exp("symbol", self.get_token())
+        # "{" - skip -
+        # self.write_terminal_exp("symbol", self.get_token())
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
@@ -557,12 +554,11 @@ class CompilationEngine:
         # statements
         self.compile_statements()
 
-        # "}"
-        self.write_terminal_exp("symbol", self.get_token())
+        # "}" - skip -
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
-        # end the subroutineBody block
-        self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</subroutineBody>\n")
+
 
     # PROJECT 11 HELPER FUNCTIONS ============================================
 
@@ -592,7 +588,7 @@ class CompilationEngine:
         # self.write_terminal_exp("symbol", self.get_token())
         self.get_token()
 
-        self.output_stream.write_function(self.symbol_table.class_name + function_name, n_vars)
+        self.output_stream.write_function(self.symbol_table.class_name + "." + function_name, n_vars)
 
         # subroutine body
         self.write_subroutine_body()
