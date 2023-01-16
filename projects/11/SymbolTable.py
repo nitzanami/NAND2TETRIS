@@ -28,6 +28,8 @@ class SymbolTable:
         """
         # every method symbol table starts with the self object in argument 0
         self.subroutine_table = [TableCell(name='this', type=self.class_name, kind='argument', runningIndex=0)]
+        self.kindToIndex['ARG'] = 0
+        self.kindToIndex['VAR'] = 0
 
     def define(self, name: str, type: str, kind: str) -> None:
         """Defines a new identifier of a given name, type and kind and assigns 
@@ -42,9 +44,9 @@ class SymbolTable:
         """
         # if 'STATIC' of 'FIELD' add to the class table
         if kind == 'STATIC' or kind == 'FIELD':
-            self.add_class_row(name, type, kind)
+            self.__add_class_row(name, type, kind)
         elif kind == 'ARG' or kind == 'VAR':
-            self.add_subroutine_row(name, type, kind)
+            self.__add_subroutine_row(name, type, kind)
         else:
             print("got unexpected kind: " + kind)
 
@@ -112,18 +114,40 @@ class SymbolTable:
     # OUR METHODS ==================================================================
 
     # a table Cell class, to keep things organized
-    class TableCell:
-        def __init__(self, name, type, kind, runningIndex=0):
-            self.name = name
-            self.type = type
-            self.kind = kind
-            self.runningIndex = runningIndex
 
     # adds a row to our symbol table in a TableCell format
-    def add_subroutine_row(self, name, type, kind):
+    def __add_subroutine_row(self, name, type, kind):
         self.subroutine_table += [TableCell(name=name, type=type, kind=kind, runningIndex=self.kindToIndex[kind])]
         self.kindToIndex[kind] += 1
 
-    def add_class_row(self, name, type, kind):
+    def __add_class_row(self, name, type, kind):
         self.class_table += [TableCell(name=name, type=type, kind=kind, runningIndex=self.kindToIndex[kind])]
         self.kindToIndex[kind] += 1
+
+
+class TableCell:
+    def __init__(self, name, type, kind, runningIndex=0):
+        self.name = name
+        self.type = type
+        self.kind = kind
+        self.runningIndex = runningIndex
+
+    def __str__(self):
+        return f"name: {self.name}, type: {self.type}, kind: {self.kind}, index: {self.runningIndex}"
+
+
+if __name__ == '__main__':
+    table = SymbolTable('BenHillel')
+    table.define('variable','int','VAR')
+    table.define('222','int','VAR')
+    table.define('variable','int','STATIC')
+    table.define("ben","boolean",'VAR')
+    table.define("asga","adsgadga","ARG")
+    table.start_subroutine()
+    table.define("AFTER","int","VAR")
+
+
+    for var in table.class_table:
+        print(var)
+    for var in table.subroutine_table:
+        print(var)
