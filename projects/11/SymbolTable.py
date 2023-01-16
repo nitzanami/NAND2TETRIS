@@ -14,21 +14,24 @@ class SymbolTable:
     scopes (class/subroutine).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, class_name) -> None:
         """Creates a new empty symbol table."""
-        # Your code goes here!
-        pass
+        # a dictionary to keep the indexes of types in the symbol table
+        self.kindToIndex = {'STATIC': 0, 'FIELD': 0, 'ARG': 0, 'VAR': 0}
+        self.subroutine_table = []
+        self.class_table = []
+        self.class_name = class_name
 
     def start_subroutine(self) -> None:
         """Starts a new subroutine scope (i.e., resets the subroutine's 
         symbol table).
         """
-        # Your code goes here!
-        pass
+        # every method symbol table starts with the self object in argument 0
+        self.subroutine_table = [TableCell(name='this', type=self.class_name, kind='argument', runningIndex=0)]
 
     def define(self, name: str, type: str, kind: str) -> None:
         """Defines a new identifier of a given name, type and kind and assigns 
-        it a running index. "STATIC" and "FIELD" identifiers have a class scope, 
+        it a running index. "STATIC" and "FIELD" identifiers have a class scope,
         while "ARG" and "VAR" identifiers have a subroutine scope.
 
         Args:
@@ -37,7 +40,11 @@ class SymbolTable:
             kind (str): the kind of the new identifier, can be:
             "STATIC", "FIELD", "ARG", "VAR".
         """
-        # Your code goes here!
+        # if 'STATIC' of 'FIELD' add to the class table
+        if kind == 'STATIC' or kind == 'FIELD':
+            self.add_class_row(name, type, kind)
+
+
         pass
 
     def var_count(self, kind: str) -> int:
@@ -85,3 +92,22 @@ class SymbolTable:
         """
         # Your code goes here!
         pass
+
+    # OUR METHODS ==================================================================
+
+    # a table Cell class, to keep things organized
+    class TableCell:
+        def __init__(self, name, type, kind, runningIndex=0):
+            self.name = name
+            self.type = type
+            self.kind = kind
+            self.runningIndex = runningIndex
+
+    # adds a row to our symbol table in a TableCell format
+    def add_subroutine_row(self, name, type, kind):
+        self.subroutine_table += [TableCell(name=name, type=type, kind=kind, runningIndex=self.kindToIndex[kind])]
+        self.kindToIndex[kind] += 1
+
+    def add_class_row(self, name, type, kind):
+        self.class_table += [TableCell(name=name, type=type, kind=kind, runningIndex=self.kindToIndex[kind])]
+        self.kindToIndex[kind] += 1
