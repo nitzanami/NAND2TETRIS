@@ -13,7 +13,7 @@ class SymbolTable:
     compilation: type, kind and running index. The symbol table has two nested
     scopes (class/subroutine).
     """
-
+    kind_to_segment = {"VAR":"local", "STATIC": 'static', "FIELD": "this","ARG":"argument"}
     def __init__(self, class_name) -> None:
         """Creates a new empty symbol table."""
         # a dictionary to keep the indexes of types in the symbol table
@@ -65,13 +65,13 @@ class SymbolTable:
         # first search through the subroutine symbol table
         for row in self.subroutine_table:
             if row.name == name:
-                return row.kind
+                return self.kind_to_segment[row.kind]
         # if not found, go to the class level
         for row in self.class_table:
             if row.name == name:
-                return row.kind
+                return self.kind_to_segment[row.kind]
         # if still not found return None
-        return None
+        return ''
 
     def type_of(self, name: str) -> str:
         """

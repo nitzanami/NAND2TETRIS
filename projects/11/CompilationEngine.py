@@ -105,6 +105,7 @@ class CompilationEngine:
         """
         # "constractor" | "function" | "method"
         # self.write_terminal_exp("keyword", self.get_token())
+        self.symbol_table.start_subroutine()
         token = self.get_token()
         if token == "function":
             self.compile_function()
@@ -248,7 +249,7 @@ class CompilationEngine:
 
         # expression
         self.compile_expression()
-        self.output_stream.write_pop(self.symbol_table.kind_of(name),self.symbol_table.index_of(name))
+        self.output_stream.write_pop_var(self.symbol_table.kind_and_index(name))
         # ";"
         self.get_token()
 
@@ -373,7 +374,7 @@ class CompilationEngine:
         elif token_type == "STRING_CONST":
             self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
         elif token_type == "KEYWORD":
-            self.write_terminal_exp("keyword", self.get_token())
+            self.compile_keyowrd_term()
         # (unaryOp term) | '(' expression ')'
         elif token_type == "SYMBOL":
             token = self.get_token()
@@ -546,3 +547,15 @@ class CompilationEngine:
 
     def compile_constractor(self):
         pass
+
+    def compile_keyowrd_term(self):
+        token = self.get_token()
+        if token == 'true':
+            self.output_stream.write_push('constant',0)
+            self.output_stream.write_arithmetic("not")
+        elif token == 'false':
+            self.output_stream.write_push('constant',0)
+        elif token == 'null':
+            self.output_stream.write_push('constants',0)
+
+

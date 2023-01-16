@@ -15,7 +15,7 @@ class VMWriter:
     """
     binary_op_to_name = {
         "+": "add", "-": "sub", "=": 'eq', '>': 'gt', '<': 'lt', '&': 'and', '|': "or",
-        '*': 'call Math.multiply 2'
+        '*': 'call Math.multiply 2','/':"call Math.divide 2"
     }
     unary_op_to_name = {
         '!': "not", '~': 'neg','-':'neg','^':'shiftleft','#':'shiftright'
@@ -113,6 +113,9 @@ class VMWriter:
 
     def write_push_var(self, param):
         self.write_push(param[0],param[1])
+
+    def write_pop_var(self, param):
+        self.write_pop(param[0], param[1])
 
 
 if __name__ == "__main__":
