@@ -5,10 +5,13 @@ was written by Aviv Yaish. It is an extension to the specifications given
 as allowed by the Creative Common Attribution-NonCommercial-ShareAlike 3.0
 Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
+import sys
 import typing
 import JackTokenizer
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
+
+VOID_RETURN = 1111
 
 
 class CompilationEngine:
@@ -30,6 +33,7 @@ class CompilationEngine:
         self.input_stream = input_stream
         self.input_stream.advance()
         self.initial_space = ""
+
         # call compile class - each jack code must begin wth a class
         self.compile_class()
         #self.compile_do()
@@ -178,7 +182,7 @@ class CompilationEngine:
         self.write_terminal_exp("identifier", self.get_token())
 
         # (',' varName)*
-        while self.input_stream.symbol()== ",":
+        while self.input_stream.symbol() == ",":
             self.write_terminal_exp("symbol", self.get_token())
             self.write_terminal_exp("identifier", self.get_token())
 
@@ -201,16 +205,16 @@ class CompilationEngine:
         # statement*
         # we can know if the next expression is a statement if the next token is one of the folowing
         # "let" "if" "while" "do" "return"
-        while self.input_stream.keyword()in {"LET", "IF", "WHILE", "DO", "RETURN"}:
-            if self.input_stream.keyword()== "LET":
+        while self.input_stream.keyword() in {"LET", "IF", "WHILE", "DO", "RETURN"}:
+            if self.input_stream.keyword() == "LET":
                 self.compile_let()
-            elif self.input_stream.keyword()== "IF":
+            elif self.input_stream.keyword() == "IF":
                 self.compile_if()
-            elif self.input_stream.keyword()== "WHILE":
+            elif self.input_stream.keyword() == "WHILE":
                 self.compile_while()
-            elif self.input_stream.keyword()== "DO":
+            elif self.input_stream.keyword() == "DO":
                 self.compile_do()
-            elif self.input_stream.keyword()== "RETURN":
+            elif self.input_stream.keyword() == "RETURN":
                 self.compile_return()
 
         # end the statements block
@@ -221,22 +225,14 @@ class CompilationEngine:
 
     def compile_do(self) -> None:
         """Compiles a do statement."""
-        # start the doStatement block
-        self.output_stream.write(self.initial_space + "<doStatement>\n")
-        self.increase_initial_space()
-
-        # "do"
-        self.write_terminal_exp("keyword", self.get_token())
+        #do
+        self.get_token()
 
         # subroutineCall
         self.compile_subroutine_call()
-
-        # ";"
-        self.write_terminal_exp("symbol", self.get_token())
-
-        # end the doStatement block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</doStatement>\n")
+        self.output_stream.write_pop("temp",0)
+        #;
+        self.get_token()
 
 
     def compile_let(self) -> None:
@@ -253,7 +249,7 @@ class CompilationEngine:
 
         # ("[" expression "]")?
         # check for the token "["
-        if self.input_stream.symbol()== "[":
+        if self.input_stream.symbol() == "[":
             # "["
             self.write_terminal_exp("symbol", self.get_token())
 
@@ -285,7 +281,7 @@ class CompilationEngine:
         self.increase_initial_space()
 
         # while
-        self.write_terminal_exp("keyword",self.get_token())
+        self.write_terminal_exp("keyword", self.get_token())
 
         # "("
         self.write_terminal_exp("symbol", self.get_token())
@@ -312,33 +308,24 @@ class CompilationEngine:
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
-        # start the returnStatement block
-        self.output_stream.write(self.initial_space + "<returnStatement>\n")
-        self.increase_initial_space()
 
-        # "return"
-        self.write_terminal_exp("keyword",self.get_token())
+        self.write_terminal_exp("keyword", self.get_token())
 
         # expression?
         # check for ";"
-        if not (self.input_stream.token_type()== "SYMBOL" and self.input_stream.symbol()== ";"):
+        if not (self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ";"):
             # expression
             self.compile_expression()
-
-        # ";"
-        self.write_terminal_exp("symbol", self.get_token())
-
-        # end the returnStatement block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</returnStatement>\n")
-
+        else:
+            self.output_stream.write_push("CONST", VOID_RETURN)
+        self.get_token()
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
         # start the ifStatement block
         self.output_stream.write(self.initial_space + "<ifStatement>\n")
         self.increase_initial_space()
-        self.write_terminal_exp("keyword",self.get_token())
+        self.write_terminal_exp("keyword", self.get_token())
         # "("
         self.write_terminal_exp("symbol", self.get_token())
 
@@ -359,7 +346,7 @@ class CompilationEngine:
 
         # ("else" "{" statements "}")?
         # search for "else"
-        if self.input_stream.keyword()== "ELSE":
+        if self.input_stream.keyword() == "ELSE":
             # "else"
             self.write_terminal_exp("keyword", self.get_token())
 
@@ -378,20 +365,17 @@ class CompilationEngine:
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
-        # start the expression block
-        self.output_stream.write(self.initial_space + "<expression>\n")
-        self.increase_initial_space()
 
         # term
         self.compile_term()
         while self.input_stream.currentToken in self.input_stream.binary_operations:
             # op
-            self.write_terminal_exp("symbol",self.get_token())
+            op = self.get_token()
             # term
             self.compile_term()
+
+            self.output_stream.write_arithmetic(op)
         # end the expression block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</expression>\n")
 
     def compile_term(self) -> None:
         """Compiles a term. 
@@ -403,24 +387,22 @@ class CompilationEngine:
         to distinguish between the three possibilities. Any other token is not
         part of this term and should not be advanced over.
         """
-        self.output_stream.write(self.initial_space + "<term>\n")
-        self.increase_initial_space()
 
         token_type = self.input_stream.token_type()
-        if token_type  == "INT_CONST":
-            self.write_terminal_exp("integerConstant",self.get_token())
+        if token_type == "INT_CONST":
+            self.output_stream.write_push("CONST", self.get_token())
         elif token_type == "STRING_CONST":
-            self.write_terminal_exp("stringConstant",self.get_token())
+            self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
         elif token_type == "KEYWORD":
-            self.write_terminal_exp("keyword",self.get_token())
+            self.write_terminal_exp("keyword", self.get_token())
         # (unaryOp term) | '(' expression ')'
         elif token_type == "SYMBOL":
             token = self.get_token()
-            self.write_terminal_exp("symbol", token)
+            # self.write_terminal_exp("symbol", token)
             # '(' expression ')'
-            if token =='(':
+            if token == '(':
                 self.compile_expression()
-                self.write_terminal_exp("symbol",self.get_token())
+                self.get_token()
             # (unaryOp term)
             else:
                 # self.write_terminal_exp("symbol",self.get_token())
@@ -433,79 +415,64 @@ class CompilationEngine:
                 self.write_terminal_exp("identifier", var)
                 self.write_terminal_exp("symbol", self.get_token())
                 self.compile_expression()
-                self.write_terminal_exp("symbol",self.get_token())
+                self.write_terminal_exp("symbol", self.get_token())
             # subroutineCall
-            elif self.input_stream.currentToken in ['(','.']:
+            elif self.input_stream.currentToken in ['(', '.']:
                 self.compile_subroutine_call(var)
             else:
                 self.write_terminal_exp("identifier", var)
 
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</term>\n")
-
-    def compile_subroutine_call(self,name = None) -> None:
+    def compile_subroutine_call(self, name=None) -> None:
         """Compiles a subroutine call"""
-        # start the subroutineCall block
-        if name is None and False:
-            self.output_stream.write(self.initial_space + "<subroutineCall>\n")
-            self.increase_initial_space()
+        # # start the subroutineCall block
+        # if name is None and False:
+        #     self.output_stream.__write(self.initial_space + "<subroutineCall>\n")
+        #     self.increase_initial_space()
 
         # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
 
         # subroutine name | (className|varName) - they are both identifiers
-        self.write_terminal_exp("identifier", name if name is not None else self.get_token())
+        identifier = name if name is not None else self.get_token()
 
         # search for a '.', if found, implement option 2
 
-        if self.input_stream.symbol()== ".":
+        if self.input_stream.symbol() == ".":
             # scenario - (className|varName)'.'subroutineNAme'('expressionList')'
 
             # '.' - symbol
-            self.write_terminal_exp("symbol", self.get_token())
+            identifier += self.get_token()
 
             # subroutineName - identifier
-            self.write_terminal_exp("identifier", self.get_token())
-
+            identifier+= self.get_token()
         # '('
-        self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # expression list
-        self.compile_expression_list()
+        n_args = self.compile_expression_list()
 
+        self.output_stream.write_call(identifier, n_args)
         # ')'
-        self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
-        # end the subroutineCall block
-        if name is None and False:
-            self.decrease_initial_space()
-            self.output_stream.write(self.initial_space + "</subroutineCall>\n")
 
-        pass
 
-    def compile_expression_list(self) -> None:
+    def compile_expression_list(self) -> int:
         """Compiles a (possibly empty) comma-separated list of expressions."""
-        # start the expressionList block
-        self.output_stream.write(self.initial_space + "<expressionList>\n")
-        self.increase_initial_space()
-
+        exp_count = 0
         # if there is no expression in the expressionList we expect to find ')' or ']' of '}'
-        if self.input_stream.token_type()!= "SYMBOL" or not self.input_stream.symbol()in {")", "]", "}"}:
+        if self.input_stream.token_type() != "SYMBOL" or not self.input_stream.symbol() in {")", "]", "}"}:
             # expression
             self.compile_expression()
-
+            exp_count +=1
             # (','expression)*
-            while self.input_stream.token_type()== "SYMBOL" and self.input_stream.symbol()== ",":
+            while self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ",":
                 # ',' - symbol
-                self.write_terminal_exp("symbol", self.get_token())
+                self.get_token()
 
                 # expression
                 self.compile_expression()
-
-        # end the expressionList block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</expressionList>\n")
-        pass
-
+                exp_count +=1
+        return exp_count
     # ================================================HELPERS FUNCTIONS=================================================
 
     def increase_initial_space(self):
@@ -516,7 +483,7 @@ class CompilationEngine:
 
     # gets the current token from the tokenizer, regardless of type, and advances the tokenizer
     def get_token(self):
-        ret =''
+        ret = ''
         if self.input_stream.token_type() == "KEYWORD":
             ret = self.input_stream.keyword().lower()
         if self.input_stream.token_type() == "SYMBOL":
