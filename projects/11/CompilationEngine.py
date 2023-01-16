@@ -24,78 +24,73 @@ class CompilationEngine:
         """
 
         # set the parameters of the class
+        self.symbol_table = None
         self.output_stream = VMWriter(output_stream)
         self.input_stream = input_stream
         self.input_stream.advance()
         self.initial_space = ""
-
         # call compile class - each jack code must begin wth a class
         self.compile_class()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
 
     def compile_class(self) -> None: # done!
         """Compiles a complete class."""
-        # open a class block
-        self.output_stream.__write(self.initial_space + "<class>\n")
-        self.increase_initial_space()
+        #  "class" - skip
+        # self.write_terminal_exp("keyword", self.get_token())
+        self.get_token()
 
-        #  "class"
-        self.write_terminal_exp("keyword", self.get_token())
+        # class name - save and initial the symbol table
+        # self.write_terminal_exp("identifier", self.get_token())
+        self.symbol_table = SymbolTable(self.get_token())
 
-        # class name
-        self.write_terminal_exp("identifier", self.get_token())
-        #  "{"
-        self.write_terminal_exp("symbol", self.get_token())
+        #  "{" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # classVarDec*
         # for each iteration check if the next item is another classVarDec*
         # do that by checking if its starts with "static" or "field"
-        while self.input_stream.keyword()== "FIELD" or self.input_stream.keyword()== "STATIC":
+        while self.input_stream.keyword() == "FIELD" or self.input_stream.keyword() == "STATIC":
             self.compile_class_var_dec()
 
         # subroutineDec*
         # for each iteration check if there is another subroutineDec
         # do that by checking if the next token is not "}", thus not from a "SYMBOL" type
-        while self.input_stream.token_type()!= "SYMBOL":
+        while self.input_stream.token_type() != "SYMBOL":
             self.compile_subroutine()
 
-        # "}"
-        self.write_terminal_exp("symbol", self.get_token())
-
-        # close the class block
-        self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</class>\n")
+        # "}" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
     def compile_class_var_dec(self) -> None: # done!
         """Compiles a static declaration or a field declaration."""
-        # open the classVarDec block
-        self.output_stream.__write(self.initial_space + "<classVarDec>\n")
-        self.increase_initial_space()
+        # write "field" or "static" - save the kind
+        # self.write_terminal_exp("keyword", self.get_token())
+        kind = self.get_token()
 
-        # write "field" or "static"
-        self.write_terminal_exp("keyword", self.get_token())
+        # write type - save type
+        type = self.write_type()
 
-        # write type
-        self.write_type()
+        # varName - the next identifier - save
+        varName = self.get_token()
 
-        # varName - the next identifier
-        self.write_terminal_exp("identifier", self.input_stream.identifier())
-        self.input_stream.advance()
+        self.symbol_table.define(varName, type, kind)
 
         # ("," varName)* , check if there is a ","
         while self.input_stream.symbol() == ",":
-            # ","
-            self.write_terminal_exp("symbol", self.get_token())
-            # varName
-            self.write_terminal_exp("identifier", self.get_token())
+            # "," - skip
+            # self.write_terminal_exp("symbol", self.get_token())
+            self.get_token()
 
-        # ";"
-        self.write_terminal_exp("symbol", self.get_token())
+            # varName - save and add to the table
+            # self.write_terminal_exp("identifier", self.get_token())
+            varName = self.get_token()
+            self.symbol_table.define(varName, type, kind)
 
-        # close the classVarDec block
-        self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</classVarDec>\n")
-
+        # ";" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
     def compile_subroutine(self) -> None:
         """
@@ -103,10 +98,6 @@ class CompilationEngine:
         You can assume that classes with constructors have at least one field,
         you will understand why this is necessary in project 11.
         """
-        # start the subroutine block
-        self.output_stream.__write(self.initial_space + "<subroutineDec>\n")
-        self.increase_initial_space()
-
         # "constractor" | "function" | "method"
         self.write_terminal_exp("keyword", self.get_token())
 
@@ -534,10 +525,12 @@ class CompilationEngine:
         self.output_stream.__write(self.initial_space + "<" + type + ">" + " " + keyword + " </" + type + ">\n")
 
     def write_type(self):
-        if self.input_stream.keyword() in {"CHAR", "INT", "BOOLEAN"}:
-            self.write_terminal_exp("keyword", self.get_token())
-        else:
-            self.write_terminal_exp("identifier", self.get_token())
+        # if self.input_stream.keyword() in {"CHAR", "INT", "BOOLEAN"}:
+        #     self.write_terminal_exp("keyword", self.get_token())
+        # else:
+        #     self.write_terminal_exp("identifier", self.get_token())
+        # return the type
+        return self.get_token()
 
     def write_subroutine_body(self): # done !
         # start the subroutineBody block
