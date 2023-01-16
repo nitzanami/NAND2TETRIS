@@ -7,6 +7,7 @@ Unported [License](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 """
 import typing
 import JackTokenizer
+from SymbolTable import SymbolTable
 from VMWriter import VMWriter
 
 
@@ -30,7 +31,8 @@ class CompilationEngine:
         self.input_stream.advance()
         self.initial_space = ""
         # call compile class - each jack code must begin wth a class
-        self.compile_class()
+        # self.compile_class()
+        self.compile_do()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
 
     def compile_class(self) -> None: # done!
