@@ -9,7 +9,7 @@ import sys
 import typing
 import JackTokenizer
 from SymbolTable import SymbolTable
-from VMWriter import VMWriter
+from VMWriter import VMWriter, generate_label, label_generator
 
 VOID_RETURN = 0
 
@@ -256,35 +256,49 @@ class CompilationEngine:
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        # start the whileStatement block
-        self.output_stream.write(self.initial_space + "<whileStatement>\n")
-        self.increase_initial_space()
+        label1 = "while" + next(label_generator)
+        label2 = "while" + next(label_generator)
 
-        # while
-        self.write_terminal_exp("keyword", self.get_token())
+        # while - skip -
+        # self.write_terminal_exp("keyword", self.get_token())
+        self.get_token()
 
-        # "("
-        self.write_terminal_exp("symbol", self.get_token())
+        # "(" - skip -
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # write label 1
+        self.output_stream.write_label(label1)
 
         # expression
         self.compile_expression()
 
-        # ")"
-        self.write_terminal_exp("symbol", self.get_token())
+        # neg
+        self.output_stream.write_arithmetic("neg")
 
-        # "{"
-        self.write_terminal_exp("symbol", self.get_token())
+        # write if-goto label 2
+        self.output_stream.write_if(label2)
+
+        # ")" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # "{" - skip -
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # statements
         self.compile_statements()
 
-        # "}"
-        self.write_terminal_exp("symbol", self.get_token())
+        # goto label1
+        self.output_stream.write_goto(label1)
 
-        # end the whileStatement block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</whileStatement>\n")
-        pass
+        # label2
+        self.output_stream.write_label(label2)
+
+        # "}" - skip -
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
     def compile_return(self) -> None:
         """Compiles a return statement."""
@@ -302,46 +316,68 @@ class CompilationEngine:
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
-        # start the ifStatement block
-        self.output_stream.write(self.initial_space + "<ifStatement>\n")
-        self.increase_initial_space()
-        self.write_terminal_exp("keyword", self.get_token())
-        # "("
-        self.write_terminal_exp("symbol", self.get_token())
+        label1 = "if" + next(label_generator)
+        label2 = "if" + next(label_generator)
+        # if - skip
+        # self.write_terminal_exp("keyword", self.get_token())
+        self.get_token()
+
+        # "(" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # expression
         self.compile_expression()
 
-        # ")"
-        self.write_terminal_exp("symbol", self.get_token())
+        # neg
+        self.output_stream.write_arithmetic("neg")
 
-        # "{"
-        self.write_terminal_exp("symbol", self.get_token())
+        # if goto label 1
+        self.output_stream.write_if(label1)
+
+        # ")" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # "{" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # statements
         self.compile_statements()
 
-        # "}"
-        self.write_terminal_exp("symbol", self.get_token())
+        # goto label 2
+        self.output_stream.write_goto(label2)
+
+        # "}" - skip
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # write (label1)
+        self.output_stream.write_label(label1)
 
         # ("else" "{" statements "}")?
         # search for "else"
         if self.input_stream.keyword() == "ELSE":
-            # "else"
-            self.write_terminal_exp("keyword", self.get_token())
+            # "else" - skip
+            # self.write_terminal_exp("keyword", self.get_token())
+            self.get_token()
 
-            # "{"
-            self.write_terminal_exp("symbol", self.get_token())
+            # "{" - skip
+            # self.write_terminal_exp("symbol", self.get_token())
+            self.get_token()
+
+
 
             # statements
             self.compile_statements()
 
-            # "}"
-            self.write_terminal_exp("symbol", self.get_token())
+            # "}" - skip
+            # self.write_terminal_exp("symbol", self.get_token())
+            self.get_token()
 
-        # end the ifStatement block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</ifStatement>\n")
+        # write label2
+        self.output_stream.write_label(label2)
 
     def compile_expression(self) -> None:
         """Compiles an expression."""

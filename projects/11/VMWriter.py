@@ -9,6 +9,16 @@ import sys
 import typing
 
 
+def generate_label():
+    index = 0
+    while True:
+        index += 1
+        yield "Label" + str(index)
+
+
+label_generator = generate_label()
+
+
 class VMWriter:
     """
     Writes VM commands into a file. Encapsulates the VM command syntax.
@@ -18,7 +28,7 @@ class VMWriter:
         '*': 'call Math.multiply 2','/':"call Math.divide 2"
     }
     unary_op_to_name = {
-        '!': "not", '~': 'neg','-':'neg','^':'shiftleft','#':'shiftright'
+        '!': "not", '~': 'neg', '-': 'neg', '^': 'shiftleft', '#': 'shiftright'
     }
 
     def __init__(self, output_stream: typing.TextIO) -> None:
@@ -112,7 +122,7 @@ class VMWriter:
         self.output.write(string + '\n')
 
     def write_push_var(self, param):
-        self.write_push(param[0],param[1])
+        self.write_push(param[0], param[1])
 
     def write_pop_var(self, param):
         self.write_pop(param[0], param[1])
