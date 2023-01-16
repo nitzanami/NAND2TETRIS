@@ -11,7 +11,7 @@ import JackTokenizer
 from SymbolTable import SymbolTable
 from VMWriter import VMWriter
 
-VOID_RETURN = 1111
+VOID_RETURN = 0
 
 
 class CompilationEngine:
@@ -36,7 +36,7 @@ class CompilationEngine:
 
         # call compile class - each jack code must begin wth a class
         self.compile_class()
-        #self.compile_do()
+        # self.compile_do()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
 
     def compile_class(self) -> None: # done!
@@ -198,9 +198,6 @@ class CompilationEngine:
         """Compiles a sequence of statements, not including the enclosing 
         "{}".
         """
-        # start the statements block
-        self.output_stream.write(self.initial_space + "<statements>\n")
-        self.increase_initial_space()
 
         # statement*
         # we can know if the next expression is a statement if the next token is one of the folowing
@@ -216,10 +213,6 @@ class CompilationEngine:
                 self.compile_do()
             elif self.input_stream.keyword() == "RETURN":
                 self.compile_return()
-
-        # end the statements block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</statements>\n")
 
 
 
@@ -309,15 +302,15 @@ class CompilationEngine:
     def compile_return(self) -> None:
         """Compiles a return statement."""
 
-        self.write_terminal_exp("keyword", self.get_token())
-
+        self.get_token()
         # expression?
         # check for ";"
         if not (self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ";"):
             # expression
             self.compile_expression()
         else:
-            self.output_stream.write_push("CONST", VOID_RETURN)
+            self.output_stream.write_push("constant", VOID_RETURN)
+        self.output_stream.write_return()
         self.get_token()
 
     def compile_if(self) -> None:
@@ -390,7 +383,7 @@ class CompilationEngine:
 
         token_type = self.input_stream.token_type()
         if token_type == "INT_CONST":
-            self.output_stream.write_push("CONST", self.get_token())
+            self.output_stream.write_push("constant", self.get_token())
         elif token_type == "STRING_CONST":
             self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
         elif token_type == "KEYWORD":
@@ -511,7 +504,7 @@ class CompilationEngine:
     def write_subroutine_body(self): # done !
 
         # "{" - skip -
-        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
@@ -557,6 +550,7 @@ class CompilationEngine:
 
         self.output_stream.write_function(self.symbol_table.class_name + "." + function_name, n_vars)
 
+        #
         # subroutine body
         self.write_subroutine_body()
 
