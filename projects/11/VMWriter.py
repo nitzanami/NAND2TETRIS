@@ -83,7 +83,7 @@ class VMWriter:
             name (str): the name of the function to call.
             n_args (int): the number of arguments the function receives.
         """
-        self.__write(f"{name} {n_args}")
+        self.__write(f"call {name} {n_args}")
 
     def write_function(self, name: str, n_locals: int) -> None:
         """Writes a VM function command.
