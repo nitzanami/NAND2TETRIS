@@ -367,7 +367,7 @@ class CompilationEngine:
             # term
             self.compile_term()
 
-            self.output_stream.write_arithmetic(op)
+            self.output_stream.write_arithmetic(self.output_stream.binary_op_to_name[op])
         # end the expression block
 
     def compile_term(self) -> None:
@@ -398,8 +398,8 @@ class CompilationEngine:
                 self.get_token()
             # (unaryOp term)
             else:
-                # self.write_terminal_exp("symbol",self.get_token())
                 self.compile_term()
+                self.output_stream.write_arithmetic(self.output_stream.unary_op_to_name[token])
         # starts with identifier
         else:
             var = self.get_token()

@@ -13,6 +13,13 @@ class VMWriter:
     """
     Writes VM commands into a file. Encapsulates the VM command syntax.
     """
+    binary_op_to_name = {
+        "+": "add", "-": "sub", "=": 'eq', '>': 'gt', '<': 'lt', '&': 'and', '|': "or",
+        '*': 'call Math.multiply 2'
+    }
+    unary_op_to_name = {
+        '!': "not", '-': 'neg'
+    }
 
     def __init__(self, output_stream: typing.TextIO) -> None:
         """Creates a new file and prepares it for writing VM commands."""
@@ -99,10 +106,11 @@ class VMWriter:
         self.__write(f"return")
 
     def __write(self, string):
-        self.output.write(string+'\n')
+        self.output.write(string + '\n')
 
     def write(self, string):
         self.output.write(string + '\n')
+
 
 if __name__ == "__main__":
     writer = VMWriter(sys.stdout)
