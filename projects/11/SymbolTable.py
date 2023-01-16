@@ -43,21 +43,13 @@ class SymbolTable:
         # if 'STATIC' of 'FIELD' add to the class table
         if kind == 'STATIC' or kind == 'FIELD':
             self.add_class_row(name, type, kind)
-
-
-        pass
+        elif kind == 'ARG' or kind == 'VAR':
+            self.add_subroutine_row(name, type, kind)
+        else:
+            print("got unexpected kind: " + kind)
 
     def var_count(self, kind: str) -> int:
-        """
-        Args:
-            kind (str): can be "STATIC", "FIELD", "ARG", "VAR".
-
-        Returns:
-            int: the number of variables of the given kind already defined in 
-            the current scope.
-        """
-        # Your code goes here!
-        pass
+        return self.kindToIndex[kind]
 
     def kind_of(self, name: str) -> str:
         """
@@ -68,8 +60,16 @@ class SymbolTable:
             str: the kind of the named identifier in the current scope, or None
             if the identifier is unknown in the current scope.
         """
-        # Your code goes here!
-        pass
+        # first search through the subroutine symbol table
+        for row in self.subroutine_table:
+            if row.name == name:
+                return row.kind
+        # if not found, go to the class level
+        for row in self.class_table:
+            if row.name == name:
+                return row.kind
+        # if still not found return None
+        return None
 
     def type_of(self, name: str) -> str:
         """
@@ -79,8 +79,16 @@ class SymbolTable:
         Returns:
             str: the type of the named identifier in the current scope.
         """
-        # Your code goes here!
-        pass
+        # first search through the subroutine symbol table
+        for row in self.subroutine_table:
+            if row.name == name:
+                return row.type
+        # if not found, go to the class level
+        for row in self.class_table:
+            if row.name == name:
+                return row.type
+
+        return None
 
     def index_of(self, name: str) -> int:
         """
@@ -90,8 +98,16 @@ class SymbolTable:
         Returns:
             int: the index assigned to the named identifier.
         """
-        # Your code goes here!
-        pass
+        # first search through the subroutine symbol table
+        for row in self.subroutine_table:
+            if row.name == name:
+                return row.runningIndex
+        # if not found, go to the class level
+        for row in self.class_table:
+            if row.name == name:
+                return row.runningIndex
+
+        return 0
 
     # OUR METHODS ==================================================================
 
