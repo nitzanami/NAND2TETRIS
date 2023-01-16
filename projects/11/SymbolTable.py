@@ -124,6 +124,9 @@ class SymbolTable:
         self.class_table += [TableCell(name=name, type=type, kind=kind, runningIndex=self.kindToIndex[kind])]
         self.kindToIndex[kind] += 1
 
+    def kind_and_index(self, var):
+        return self.kind_of(var),self.index_of(var)
+
 
 class TableCell:
     def __init__(self, name, type, kind, runningIndex=0):

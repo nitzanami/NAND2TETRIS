@@ -28,7 +28,7 @@ class CompilationEngine:
         """
 
         # set the parameters of the class
-        self.symbol_table = None
+        self.symbol_table: SymbolTable = None
         self.output_stream = VMWriter(output_stream)
         self.input_stream = input_stream
         self.input_stream.advance()
@@ -38,7 +38,6 @@ class CompilationEngine:
         self.compile_class()
         # self.compile_do()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
-
     def compile_class(self) -> None: # done!
         """Compiles a complete class."""
         #  "class" - skip
@@ -166,33 +165,27 @@ class CompilationEngine:
                 n_vars += 1
         return n_vars
 
-    def compile_var_dec(self) -> None:
+    def compile_var_dec(self) -> int:
         """Compiles a var declaration."""
-        # start the varDec block
-        self.output_stream.write(self.initial_space + "<varDec>\n")
-        self.increase_initial_space()
-
+        var_count = 0
         # "var"
-        self.write_terminal_exp("keyword", self.get_token())
+        self.get_token()
 
         # type
-        self.write_type()
+        type = self.write_type()
 
         # varName
-        self.write_terminal_exp("identifier", self.get_token())
-
+        name = self.get_token()
+        self.symbol_table.define(name,type,"VAR")
+        var_count+=1
         # (',' varName)*
         while self.input_stream.symbol() == ",":
-            self.write_terminal_exp("symbol", self.get_token())
-            self.write_terminal_exp("identifier", self.get_token())
-
+            self.get_token()
+            self.symbol_table.define(self.get_token(), type, "VAR")
+            var_count += 1
         # ";"
-        self.write_terminal_exp("symbol", self.get_token())
-
-        # end the varDec block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</varDec>\n")
-        pass
+        self.get_token()
+        return var_count
 
     def compile_statements(self) -> None:
         """Compiles a sequence of statements, not including the enclosing 
@@ -230,18 +223,16 @@ class CompilationEngine:
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
-        # start the letStatement block
-        self.output_stream.write(self.initial_space + "<letStatement>\n")
-        self.increase_initial_space()
 
         # "let"
-        self.write_terminal_exp("keyword", self.get_token())
+        self.get_token()
 
         # varName
-        self.write_terminal_exp("identifier", self.get_token())
+        name = self.get_token()
 
         # ("[" expression "]")?
         # check for the token "["
+        """
         if self.input_stream.symbol() == "[":
             # "["
             self.write_terminal_exp("symbol", self.get_token())
@@ -251,21 +242,16 @@ class CompilationEngine:
 
             # "]"
             self.write_terminal_exp("symbol", self.get_token())
-
+        """
         # '='
-        self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
         # expression
         self.compile_expression()
-
+        self.output_stream.write_pop(self.symbol_table.kind_of(name),self.symbol_table.index_of(name))
         # ";"
-        self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
 
-        # end the letStatement block
-        self.decrease_initial_space()
-        self.output_stream.write(self.initial_space + "</letStatement>\n")
-
-        pass
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
@@ -413,7 +399,7 @@ class CompilationEngine:
             elif self.input_stream.currentToken in ['(', '.']:
                 self.compile_subroutine_call(var)
             else:
-                self.write_terminal_exp("identifier", var)
+                self.output_stream.write_push_var(self.symbol_table.kind_and_index(var))
 
     def compile_subroutine_call(self, name=None) -> None:
         """Compiles a subroutine call"""
@@ -501,16 +487,18 @@ class CompilationEngine:
         # return the type
         return self.get_token()
 
-    def write_subroutine_body(self): # done !
+    def write_subroutine_body(self,function_name): # done !
 
         # "{" - skip -
         self.get_token()
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
+        var_count = 0
         while self.input_stream.keyword()== "VAR":
-            self.compile_var_dec()
+            var_count += self.compile_var_dec()
 
+        self.output_stream.write_function(function_name,var_count)
         # statements
         self.compile_statements()
 
@@ -548,11 +536,10 @@ class CompilationEngine:
         # self.write_terminal_exp("symbol", self.get_token())
         self.get_token()
 
-        self.output_stream.write_function(self.symbol_table.class_name + "." + function_name, n_vars)
-
+        function_name = self.symbol_table.class_name + "." + function_name
         #
         # subroutine body
-        self.write_subroutine_body()
+        self.write_subroutine_body(function_name)
 
     def compile_method(self):
         pass

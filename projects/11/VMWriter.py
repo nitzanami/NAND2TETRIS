@@ -18,7 +18,7 @@ class VMWriter:
         '*': 'call Math.multiply 2'
     }
     unary_op_to_name = {
-        '!': "not", '-': 'neg'
+        '!': "not", '~': 'neg','-':'neg','^':'shiftleft','#':'shiftright'
     }
 
     def __init__(self, output_stream: typing.TextIO) -> None:
@@ -110,6 +110,9 @@ class VMWriter:
 
     def write(self, string):
         self.output.write(string + '\n')
+
+    def write_push_var(self, param):
+        self.write_push(param[0],param[1])
 
 
 if __name__ == "__main__":
