@@ -99,8 +99,15 @@ class CompilationEngine:
         you will understand why this is necessary in project 11.
         """
         # "constractor" | "function" | "method"
-        self.write_terminal_exp("keyword", self.get_token())
-
+        # self.write_terminal_exp("keyword", self.get_token())
+        token = self.get_token()
+        if token == "function":
+            self.compile_function()
+        elif token == "method":
+            self.compile_method()
+        else:
+            self.compile_constractor()
+        """  
         # "void" | type
         # check for "void" by checking if the next token type is "KEYWORD" - thus not type
         if self.input_stream.token_type() == "KEYWORD":
@@ -128,30 +135,30 @@ class CompilationEngine:
         self.output_stream.__write(self.initial_space + "</subroutineDec>\n")
 
         pass
+        """
 
-    def compile_parameter_list(self) -> None: # done!
+    def compile_parameter_list(self): # done!
         """Compiles a (possibly empty) parameter list, not including the 
         enclosing "()".
         """
-        # start the parameterList block
-        self.output_stream.__write(self.initial_space + "<parameterList>\n")
-        self.increase_initial_space()
-
-        # while the next token is not ")", continue
+        n_vars = 0
+        # while the next token is not ")", continue and increase n_vars
         # type varName
         if not (self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ")"):
             self.write_type()
-            self.write_terminal_exp("identifier", self.get_token())
+            # self.write_terminal_exp("identifier", self.get_token())
+            self.get_token()
+            n_vars += 1
 
             # ("," type varName)*
             while self.input_stream.token_type() == "SYMBOL" and not self.input_stream.symbol() == ")":
-                self.write_terminal_exp("symbol", self.get_token())
+                # self.write_terminal_exp("symbol", self.get_token())
+                self.get_token()
                 self.write_type()
-                self.write_terminal_exp("identifier", self.get_token())
-
-        # end the parameterList block
-        self.decrease_initial_space()
-        self.output_stream.__write(self.initial_space + "</parameterList>\n")
+                # self.write_terminal_exp("identifier", self.get_token())
+                self.get_token()
+                n_vars += 1
+        return n_vars
 
     def compile_var_dec(self) -> None:
         """Compiles a var declaration."""
@@ -555,6 +562,41 @@ class CompilationEngine:
         self.decrease_initial_space()
         self.output_stream.__write(self.initial_space + "</subroutineBody>\n")
 
+    # PROJECT 11 HELPER FUNCTIONS ============================================
 
+    def compile_function(self):
+        # "void" | type - we dont care! only the  caller care -- skip! --
+        # check for "void" by checking if the next token type is "KEYWORD" - thus not type
+        # if self.input_stream.token_type() == "KEYWORD":
+        #     self.write_terminal_exp("keyword", self.get_token())
+        # else:
+        #     self.write_type()
+        self.get_token()
 
+        # write on VM "CLASS_NAME + .FUNCTION_NAME + NUM_OF_PARAMETERS"
 
+        # subroutine name - identifier -- save! --
+        # self.write_terminal_exp("identifier", self.get_token())
+        function_name = self.get_token()
+
+        # "(" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # parameterList
+        n_vars = self.compile_parameter_list()
+
+        # ")" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        self.output_stream.write_function(self.symbol_table.class_name + function_name, n_vars)
+
+        # subroutine body
+        self.write_subroutine_body()
+
+    def compile_method(self):
+        pass
+
+    def compile_constractor(self):
+        pass
