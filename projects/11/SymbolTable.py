@@ -27,7 +27,6 @@ class SymbolTable:
         symbol table).
         """
         # every method symbol table starts with the self object in argument 0
-        self.subroutine_table = [TableCell(name='this', type=self.class_name, kind='argument', runningIndex=0)]
         self.kindToIndex['argument'] = 0
         self.kindToIndex['local'] = 0
 

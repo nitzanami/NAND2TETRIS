@@ -605,8 +605,12 @@ class CompilationEngine:
         self.write_subroutine_body(function_name)
 
     def compile_method(self):
+
+
         # type
-        self.get_token()
+        type = self.get_token()
+
+        self.symbol_table.define("this",type,"argument")
 
         # write on VM "CLASS_NAME + .FUNCTION_NAME + NUM_OF_PARAMETERS"
 
