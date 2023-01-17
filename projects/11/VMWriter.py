@@ -19,16 +19,35 @@ def generate_label():
 label_generator = generate_label()
 
 
+def generate_if():
+    i = 0
+    while True:
+        yield f'IF_TRUE{i}', f'IF_FALSE{i}', f'IF_END{i}'
+        i += 1
+
+
+def generate_while():
+    i = 0
+    while True:
+        yield f'WHILE_EXP{i}', f'WHILE_END{i}'
+        i += 1
+
+
+while_label_generator = generate_while()
+
+if_label_generator = generate_if()
+
+
 class VMWriter:
     """
     Writes VM commands into a file. Encapsulates the VM command syntax.
     """
     binary_op_to_name = {
         "+": "add", "-": "sub", "=": 'eq', '>': 'gt', '<': 'lt', '&': 'and', '|': "or",
-        '*': 'call Math.multiply 2','/':"call Math.divide 2"
+        '*': 'call Math.multiply 2', '/': "call Math.divide 2"
     }
     unary_op_to_name = {
-        '!': "not", '~': 'neg', '-': 'neg', '^': 'shiftleft', '#': 'shiftright'
+        '~': 'not', '-': 'neg', '^': 'shiftleft', '#': 'shiftright'
     }
 
     def __init__(self, output_stream: typing.TextIO) -> None:

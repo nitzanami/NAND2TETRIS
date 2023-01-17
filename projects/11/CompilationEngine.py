@@ -9,7 +9,7 @@ import sys
 import typing
 import JackTokenizer
 from SymbolTable import SymbolTable
-from VMWriter import VMWriter, generate_label, label_generator
+from VMWriter import VMWriter, if_label_generator, while_label_generator
 
 VOID_RETURN = 0
 
@@ -38,7 +38,8 @@ class CompilationEngine:
         self.compile_class()
         # self.compile_do()
         # there is always just one class per file, thus we can assume that compile class is called once per call.
-    def compile_class(self) -> None: # done!
+
+    def compile_class(self) -> None:  # done!
         """Compiles a complete class."""
         #  "class" - skip
         # self.write_terminal_exp("keyword", self.get_token())
@@ -68,7 +69,7 @@ class CompilationEngine:
         # self.write_terminal_exp("symbol", self.get_token())
         self.get_token()
 
-    def compile_class_var_dec(self) -> None: # done!
+    def compile_class_var_dec(self) -> None:  # done!
         """Compiles a static declaration or a field declaration."""
         # write "field" or "static" - save the kind
         # self.write_terminal_exp("keyword", self.get_token())
@@ -143,7 +144,7 @@ class CompilationEngine:
         pass
         """
 
-    def compile_parameter_list(self): # done!
+    def compile_parameter_list(self):  # done!
         """Compiles a (possibly empty) parameter list, not including the 
         enclosing "()".
         """
@@ -151,18 +152,19 @@ class CompilationEngine:
         # while the next token is not ")", continue and increase n_vars
         # type varName
         if not (self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ")"):
-            self.write_type()
-            # self.write_terminal_exp("identifier", self.get_token())
-            self.get_token()
+            type = self.get_token()
+
+            self.symbol_table.define(self.get_token(), type, "argument")
             n_vars += 1
 
             # ("," type varName)*
             while self.input_stream.token_type() == "SYMBOL" and not self.input_stream.symbol() == ")":
                 # self.write_terminal_exp("symbol", self.get_token())
                 self.get_token()
-                self.write_type()
+
+                type = self.get_token()
                 # self.write_terminal_exp("identifier", self.get_token())
-                self.get_token()
+                self.symbol_table.define(self.get_token(), type, "argument")
                 n_vars += 1
         return n_vars
 
@@ -177,12 +179,12 @@ class CompilationEngine:
 
         # varName
         name = self.get_token()
-        self.symbol_table.define(name,type,"VAR")
-        var_count+=1
+        self.symbol_table.define(name, type, "local")
+        var_count += 1
         # (',' varName)*
         while self.input_stream.symbol() == ",":
             self.get_token()
-            self.symbol_table.define(self.get_token(), type, "VAR")
+            self.symbol_table.define(self.get_token(), type, "local")
             var_count += 1
         # ";"
         self.get_token()
@@ -208,19 +210,16 @@ class CompilationEngine:
             elif self.input_stream.keyword() == "RETURN":
                 self.compile_return()
 
-
-
     def compile_do(self) -> None:
         """Compiles a do statement."""
-        #do
+        # do
         self.get_token()
 
         # subroutineCall
         self.compile_subroutine_call()
-        self.output_stream.write_pop("temp",0)
-        #;
+        self.output_stream.write_pop("temp", 0)
+        # ;
         self.get_token()
-
 
     def compile_let(self) -> None:
         """Compiles a let statement."""
@@ -253,11 +252,9 @@ class CompilationEngine:
         # ";"
         self.get_token()
 
-
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        label1 = "while" + next(label_generator)
-        label2 = "while" + next(label_generator)
+        while_exp, while_end = next(while_label_generator)
 
         # while - skip -
         # self.write_terminal_exp("keyword", self.get_token())
@@ -268,16 +265,16 @@ class CompilationEngine:
         self.get_token()
 
         # write label 1
-        self.output_stream.write_label(label1)
+        self.output_stream.write_label(while_exp)
 
         # expression
         self.compile_expression()
 
         # neg
-        self.output_stream.write_arithmetic("neg")
+        self.output_stream.write_arithmetic("not")
 
         # write if-goto label 2
-        self.output_stream.write_if(label2)
+        self.output_stream.write_if(while_end)
 
         # ")" - skip
         # self.write_terminal_exp("symbol", self.get_token())
@@ -291,10 +288,10 @@ class CompilationEngine:
         self.compile_statements()
 
         # goto label1
-        self.output_stream.write_goto(label1)
+        self.output_stream.write_goto(while_exp)
 
         # label2
-        self.output_stream.write_label(label2)
+        self.output_stream.write_label(while_end)
 
         # "}" - skip -
         # self.write_terminal_exp("symbol", self.get_token())
@@ -316,8 +313,7 @@ class CompilationEngine:
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
-        label1 = "if" + next(label_generator)
-        label2 = "if" + next(label_generator)
+        if_true, if_false, if_end = next(if_label_generator)
         # if - skip
         # self.write_terminal_exp("keyword", self.get_token())
         self.get_token()
@@ -329,11 +325,12 @@ class CompilationEngine:
         # expression
         self.compile_expression()
 
-        # neg
-        self.output_stream.write_arithmetic("neg")
-
         # if goto label 1
-        self.output_stream.write_if(label1)
+        self.output_stream.write_if(if_true)
+
+        self.output_stream.write_goto(if_false)
+
+        self.output_stream.write_label(if_true)
 
         # ")" - skip
         # self.write_terminal_exp("symbol", self.get_token())
@@ -346,28 +343,24 @@ class CompilationEngine:
         # statements
         self.compile_statements()
 
-        # goto label 2
-        self.output_stream.write_goto(label2)
-
         # "}" - skip
         # self.write_terminal_exp("symbol", self.get_token())
         self.get_token()
 
-        # write (label1)
-        self.output_stream.write_label(label1)
-
         # ("else" "{" statements "}")?
         # search for "else"
         if self.input_stream.keyword() == "ELSE":
+            # goto if_false
+            self.output_stream.write_goto(if_end)
+
+            # write: label if_false
+            self.output_stream.write_label(if_false)
+
             # "else" - skip
-            # self.write_terminal_exp("keyword", self.get_token())
             self.get_token()
 
             # "{" - skip
-            # self.write_terminal_exp("symbol", self.get_token())
             self.get_token()
-
-
 
             # statements
             self.compile_statements()
@@ -376,8 +369,9 @@ class CompilationEngine:
             # self.write_terminal_exp("symbol", self.get_token())
             self.get_token()
 
-        # write label2
-        self.output_stream.write_label(label2)
+            self.output_stream.write_label(if_end)
+        else:
+            self.output_stream.write_label(if_false)
 
     def compile_expression(self) -> None:
         """Compiles an expression."""
@@ -414,7 +408,6 @@ class CompilationEngine:
         # (unaryOp term) | '(' expression ')'
         elif token_type == "SYMBOL":
             token = self.get_token()
-            # self.write_terminal_exp("symbol", token)
             # '(' expression ')'
             if token == '(':
                 self.compile_expression()
@@ -440,10 +433,6 @@ class CompilationEngine:
 
     def compile_subroutine_call(self, name=None) -> None:
         """Compiles a subroutine call"""
-        # # start the subroutineCall block
-        # if name is None and False:
-        #     self.output_stream.__write(self.initial_space + "<subroutineCall>\n")
-        #     self.increase_initial_space()
 
         # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
 
@@ -451,26 +440,34 @@ class CompilationEngine:
         identifier = name if name is not None else self.get_token()
 
         # search for a '.', if found, implement option 2
-
+        n_args = 0
         if self.input_stream.symbol() == ".":
             # scenario - (className|varName)'.'subroutineNAme'('expressionList')'
-
+            type = self.symbol_table.type_of(identifier)
+            # if a method
+            if type is not None:
+                self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+                identifier = self.symbol_table.type_of(identifier)
+                n_args = 1
             # '.' - symbol
             identifier += self.get_token()
 
             # subroutineName - identifier
-            identifier+= self.get_token()
+            identifier += self.get_token()
+        else:   # subroutineName'('expressionList')'
+            self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+            identifier = self.symbol_table.class_name + '.' + identifier
+            n_args = 1
+
         # '('
         self.get_token()
 
         # expression list
-        n_args = self.compile_expression_list()
+        n_args += self.compile_expression_list()
 
         self.output_stream.write_call(identifier, n_args)
         # ')'
         self.get_token()
-
-
 
     def compile_expression_list(self) -> int:
         """Compiles a (possibly empty) comma-separated list of expressions."""
@@ -479,7 +476,7 @@ class CompilationEngine:
         if self.input_stream.token_type() != "SYMBOL" or not self.input_stream.symbol() in {")", "]", "}"}:
             # expression
             self.compile_expression()
-            exp_count +=1
+            exp_count += 1
             # (','expression)*
             while self.input_stream.token_type() == "SYMBOL" and self.input_stream.symbol() == ",":
                 # ',' - symbol
@@ -487,8 +484,9 @@ class CompilationEngine:
 
                 # expression
                 self.compile_expression()
-                exp_count +=1
+                exp_count += 1
         return exp_count
+
     # ================================================HELPERS FUNCTIONS=================================================
 
     def increase_initial_space(self):
@@ -524,18 +522,21 @@ class CompilationEngine:
         # return the type
         return self.get_token()
 
-    def write_subroutine_body(self,function_name): # done !
+    def write_subroutine_body(self, function_name, is_method = False):  # done !
 
         # "{" - skip -
         self.get_token()
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
-        var_count = 0
-        while self.input_stream.keyword()== "VAR":
+        var_count = 1 if is_method else 1
+        while self.input_stream.keyword() == "VAR":
             var_count += self.compile_var_dec()
 
-        self.output_stream.write_function(function_name,var_count)
+        self.output_stream.write_function(function_name, var_count)
+        if is_method:
+            self.output_stream.write_push("argument",0)
+            self.output_stream.write_pop("pointer",0)
         # statements
         self.compile_statements()
 
@@ -543,23 +544,15 @@ class CompilationEngine:
         # self.write_terminal_exp("symbol", self.get_token())
         self.get_token()
 
-
-
     # PROJECT 11 HELPER FUNCTIONS ============================================
 
     def compile_function(self):
-        # "void" | type - we dont care! only the  caller care -- skip! --
-        # check for "void" by checking if the next token type is "KEYWORD" - thus not type
-        # if self.input_stream.token_type() == "KEYWORD":
-        #     self.write_terminal_exp("keyword", self.get_token())
-        # else:
-        #     self.write_type()
+        # type
         self.get_token()
 
         # write on VM "CLASS_NAME + .FUNCTION_NAME + NUM_OF_PARAMETERS"
 
         # subroutine name - identifier -- save! --
-        # self.write_terminal_exp("identifier", self.get_token())
         function_name = self.get_token()
 
         # "(" -- skip! --
@@ -567,7 +560,7 @@ class CompilationEngine:
         self.get_token()
 
         # parameterList
-        n_vars = self.compile_parameter_list()
+        self.compile_parameter_list()
 
         # ")" -- skip! --
         # self.write_terminal_exp("symbol", self.get_token())
@@ -579,7 +572,29 @@ class CompilationEngine:
         self.write_subroutine_body(function_name)
 
     def compile_method(self):
-        pass
+        # type
+        self.get_token()
+
+        # write on VM "CLASS_NAME + .FUNCTION_NAME + NUM_OF_PARAMETERS"
+
+        # subroutine name - identifier -- save! --
+        function_name = self.get_token()
+
+        # "(" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # parameterList
+        self.compile_parameter_list()
+
+        # ")" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        function_name = self.symbol_table.class_name + "." + function_name
+        #
+        # subroutine body
+        self.write_subroutine_body(function_name,True)
 
     def compile_constractor(self):
         pass
@@ -587,11 +602,9 @@ class CompilationEngine:
     def compile_keyowrd_term(self):
         token = self.get_token()
         if token == 'true':
-            self.output_stream.write_push('constant',0)
+            self.output_stream.write_push('constant', 0)
             self.output_stream.write_arithmetic("not")
         elif token == 'false':
-            self.output_stream.write_push('constant',0)
+            self.output_stream.write_push('constant', 0)
         elif token == 'null':
-            self.output_stream.write_push('constants',0)
-
-
+            self.output_stream.write_push('constants', 0)

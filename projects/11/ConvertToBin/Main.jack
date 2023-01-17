@@ -50,7 +50,7 @@ class Main {
        	        }
     	        else {
     	            do Memory.poke(8000 + position, 0);
-      	        }    
+      	        }  
     	    }
     	    else {
     	        let loop = false;

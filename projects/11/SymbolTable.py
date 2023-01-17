@@ -13,11 +13,11 @@ class SymbolTable:
     compilation: type, kind and running index. The symbol table has two nested
     scopes (class/subroutine).
     """
-    kind_to_segment = {"VAR":"local", "STATIC": 'static', "FIELD": "this","ARG":"argument"}
+    # kind_to_segment = {"VAR":"local", "STATIC": 'static', "FIELD": "this","ARG":"argument"}
     def __init__(self, class_name) -> None:
         """Creates a new empty symbol table."""
         # a dictionary to keep the indexes of types in the symbol table
-        self.kindToIndex = {'STATIC': 0, 'FIELD': 0, 'ARG': 0, 'VAR': 0}
+        self.kindToIndex = {'static': 0, 'field': 0, 'argument': 0, 'local': 0}
         self.subroutine_table = []
         self.class_table = []
         self.class_name = class_name
@@ -28,8 +28,8 @@ class SymbolTable:
         """
         # every method symbol table starts with the self object in argument 0
         self.subroutine_table = [TableCell(name='this', type=self.class_name, kind='argument', runningIndex=0)]
-        self.kindToIndex['ARG'] = 0
-        self.kindToIndex['VAR'] = 0
+        self.kindToIndex['argument'] = 0
+        self.kindToIndex['local'] = 0
 
     def define(self, name: str, type: str, kind: str) -> None:
         """Defines a new identifier of a given name, type and kind and assigns 
@@ -43,9 +43,9 @@ class SymbolTable:
             "STATIC", "FIELD", "ARG", "VAR".
         """
         # if 'STATIC' of 'FIELD' add to the class table
-        if kind == 'STATIC' or kind == 'FIELD':
+        if kind == 'static' or kind == 'field':
             self.__add_class_row(name, type, kind)
-        elif kind == 'ARG' or kind == 'VAR':
+        elif kind == 'argument' or kind == 'local':
             self.__add_subroutine_row(name, type, kind)
         else:
             print("got unexpected kind: " + kind)
@@ -65,11 +65,11 @@ class SymbolTable:
         # first search through the subroutine symbol table
         for row in self.subroutine_table:
             if row.name == name:
-                return self.kind_to_segment[row.kind]
+                return row.kind
         # if not found, go to the class level
         for row in self.class_table:
             if row.name == name:
-                return self.kind_to_segment[row.kind]
+                return row.kind
         # if still not found return None
         return ''
 
