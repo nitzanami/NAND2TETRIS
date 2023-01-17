@@ -166,6 +166,8 @@ class CompilationEngine:
                 # self.write_terminal_exp("identifier", self.get_token())
                 self.symbol_table.define(self.get_token(), type, "argument")
                 n_vars += 1
+
+
         return n_vars
 
     def compile_var_dec(self) -> int:
@@ -190,7 +192,7 @@ class CompilationEngine:
         self.get_token()
         return var_count
 
-    def compile_statements(self) -> None:
+    def compile_statements(self, is_constractor = False) -> None:
         """Compiles a sequence of statements, not including the enclosing 
         "{}".
         """
@@ -200,28 +202,28 @@ class CompilationEngine:
         # "let" "if" "while" "do" "return"
         while self.input_stream.keyword() in {"LET", "IF", "WHILE", "DO", "RETURN"}:
             if self.input_stream.keyword() == "LET":
-                self.compile_let()
+                self.compile_let(is_constractor=is_constractor)
             elif self.input_stream.keyword() == "IF":
                 self.compile_if()
             elif self.input_stream.keyword() == "WHILE":
                 self.compile_while()
             elif self.input_stream.keyword() == "DO":
-                self.compile_do()
+                self.compile_do(is_constractor=is_constractor)
             elif self.input_stream.keyword() == "RETURN":
                 self.compile_return()
 
-    def compile_do(self) -> None:
+    def compile_do(self, is_constractor=False) -> None:
         """Compiles a do statement."""
         # do
         self.get_token()
 
         # subroutineCall
-        self.compile_subroutine_call()
+        self.compile_subroutine_call(is_constractor=is_constractor)
         self.output_stream.write_pop("temp", 0)
         # ;
         self.get_token()
 
-    def compile_let(self) -> None:
+    def compile_let(self, is_constractor = False) -> None:
         """Compiles a let statement."""
 
         # "let"
@@ -248,7 +250,10 @@ class CompilationEngine:
 
         # expression
         self.compile_expression()
-        self.output_stream.write_pop_var(self.symbol_table.kind_and_index(name))
+        if is_constractor:
+            self.output_stream.write_pop_var(("this",self.symbol_table.kind_and_index(name)[1]))
+        else:
+            self.output_stream.write_pop_var(self.symbol_table.kind_and_index(name))
         # ";"
         self.get_token()
 
@@ -402,7 +407,8 @@ class CompilationEngine:
         if token_type == "INT_CONST":
             self.output_stream.write_push("constant", self.get_token())
         elif token_type == "STRING_CONST":
-            self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
+            #self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
+            self.output_stream.write(self.get_token())
         elif token_type == "KEYWORD":
             self.compile_keyowrd_term()
         # (unaryOp term) | '(' expression ')'
@@ -431,10 +437,10 @@ class CompilationEngine:
             else:
                 self.output_stream.write_push_var(self.symbol_table.kind_and_index(var))
 
-    def compile_subroutine_call(self, name=None) -> None:
+    def compile_subroutine_call(self, name=None, is_constractor = False) -> None:
         """Compiles a subroutine call"""
 
-        # subroutineName'('expressionList')' | (className|varName)'.'subroutineNAme'('expressionList')'
+        # subroutineName'('expressionList')' | (className|varName)'.'subroutineName'('expressionList')'
 
         # subroutine name | (className|varName) - they are both identifiers
         identifier = name if name is not None else self.get_token()
@@ -446,7 +452,10 @@ class CompilationEngine:
             type = self.symbol_table.type_of(identifier)
             # if a method
             if type is not None:
-                self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+                if is_constractor:
+                    self.output_stream.write_push_var(("pointer", self.symbol_table.kind_and_index(identifier)[1]))
+                else:
+                    self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
                 identifier = self.symbol_table.type_of(identifier)
                 n_args = 1
             # '.' - symbol
@@ -455,7 +464,10 @@ class CompilationEngine:
             # subroutineName - identifier
             identifier += self.get_token()
         else:   # subroutineName'('expressionList')'
-            self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+            if is_constractor:
+                self.output_stream.write_push_var(("pointer", self.symbol_table.kind_and_index(identifier)[1]))
+            else:
+                self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
             identifier = self.symbol_table.class_name + '.' + identifier
             n_args = 1
 
@@ -522,23 +534,34 @@ class CompilationEngine:
         # return the type
         return self.get_token()
 
-    def write_subroutine_body(self, function_name, is_method = False):  # done !
+    def write_subroutine_body(self, function_name, is_method = False, is_constractor = False):  # done !
 
         # "{" - skip -
         self.get_token()
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
-        var_count = 1 if is_method else 1
+        var_count = 1 if is_method else 0
+        param_count = len(self.symbol_table.class_table) if is_constractor else 0
         while self.input_stream.keyword() == "VAR":
             var_count += self.compile_var_dec()
 
         self.output_stream.write_function(function_name, var_count)
+        if is_constractor:
+            # push the num of vars to the stack
+            self.output_stream.write_push("constant", param_count)
+
+            # search for available memory segment of said length
+            self.output_stream.write_call("Memory.alloc", 1)
+
+            # pop the segment location to the stack and place it in pointer 0 - the pointer to our memory segment location
+            self.output_stream.write_pop("pointer", 0)
+
         if is_method:
             self.output_stream.write_push("argument",0)
             self.output_stream.write_pop("pointer",0)
         # statements
-        self.compile_statements()
+        self.compile_statements(is_constractor=is_constractor)
 
         # "}" - skip -
         # self.write_terminal_exp("symbol", self.get_token())
@@ -597,7 +620,36 @@ class CompilationEngine:
         self.write_subroutine_body(function_name,True)
 
     def compile_constractor(self):
-        pass
+        # first we want to find an available memory segment of size n (the num of inputs)
+
+        # type
+        self.get_token()
+
+        # write on VM "CLASS_NAME + .FUNCTION_NAME + NUM_OF_PARAMETERS"
+
+        # subroutine name - identifier -- save! --
+        function_name = self.get_token()
+
+        # "(" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        # parameterList
+        self.compile_parameter_list()
+
+        # ")" -- skip! --
+        # self.write_terminal_exp("symbol", self.get_token())
+        self.get_token()
+
+        function_name = self.symbol_table.class_name + "." + function_name
+
+        # subroutine body
+        self.write_subroutine_body(function_name, is_constractor=True)
+
+
+
+
+
 
     def compile_keyowrd_term(self):
         token = self.get_token()
@@ -608,3 +660,5 @@ class CompilationEngine:
             self.output_stream.write_push('constant', 0)
         elif token == 'null':
             self.output_stream.write_push('constants', 0)
+        elif token == 'this':
+            self.output_stream.write_push('pointer', 0)

@@ -69,6 +69,8 @@ class SymbolTable:
         # if not found, go to the class level
         for row in self.class_table:
             if row.name == name:
+                if row.kind == "field":
+                    return "this"
                 return row.kind
         # if still not found return None
         return ''
