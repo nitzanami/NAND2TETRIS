@@ -477,8 +477,6 @@ class CompilationEngine:
             # subroutineName - identifier
             identifier += self.get_token()
         else:   # subroutineName'('expressionList')'
-            if identifier == 'hide':
-                print("hide")
             self.output_stream.write_push("pointer",0)
             identifier = self.symbol_table.class_name + '.' + identifier
             n_args = 1
@@ -676,7 +674,7 @@ class CompilationEngine:
         elif token == 'false':
             self.output_stream.write_push('constant', 0)
         elif token == 'null':
-            self.output_stream.write_push('constants', 0)
+            self.output_stream.write_push('constant', 0)
         elif token == 'this':
             self.output_stream.write_push('pointer', 0)
 
