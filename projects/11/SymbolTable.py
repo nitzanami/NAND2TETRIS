@@ -29,6 +29,7 @@ class SymbolTable:
         # every method symbol table starts with the self object in argument 0
         self.kindToIndex['argument'] = 0
         self.kindToIndex['local'] = 0
+        self.subroutine_table = []
 
     def define(self, name: str, type: str, kind: str) -> None:
         """Defines a new identifier of a given name, type and kind and assigns 
@@ -127,6 +128,13 @@ class SymbolTable:
 
     def kind_and_index(self, var):
         return self.kind_of(var),self.index_of(var)
+
+    def get_field_count(self):
+        count = 0
+        for row in self.class_table:
+            if row.kind == 'field':
+                count += 1
+        return count
 
 
 class TableCell:

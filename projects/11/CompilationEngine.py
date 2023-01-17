@@ -477,6 +477,8 @@ class CompilationEngine:
             # subroutineName - identifier
             identifier += self.get_token()
         else:   # subroutineName'('expressionList')'
+            if identifier == 'hide':
+                print("hide")
             self.output_stream.write_push("pointer",0)
             identifier = self.symbol_table.class_name + '.' + identifier
             n_args = 1
@@ -552,7 +554,8 @@ class CompilationEngine:
         # varDec*
         # while the next token is "var" the next statement is a varDec
         var_count = 0
-        param_count = len(self.symbol_table.class_table) if is_constractor else 0
+        param_count = 0
+        param_count = self.symbol_table.get_field_count()
         while self.input_stream.keyword() == "VAR":
             var_count += self.compile_var_dec()
 
