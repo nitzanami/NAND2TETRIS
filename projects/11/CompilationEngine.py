@@ -166,8 +166,6 @@ class CompilationEngine:
                 # self.write_terminal_exp("identifier", self.get_token())
                 self.symbol_table.define(self.get_token(), type, "argument")
                 n_vars += 1
-
-
         return n_vars
 
     def compile_var_dec(self) -> int:
@@ -234,19 +232,34 @@ class CompilationEngine:
 
         # ("[" expression "]")?
         # check for the token "["
-        """
+
         if self.input_stream.symbol() == "[":
+
             # "["
-            self.write_terminal_exp("symbol", self.get_token())
+            self.get_token()
 
             # expression
             self.compile_expression()
 
+            # array var
+            self.output_stream.write_push_var(self.symbol_table.kind_and_index(name))
+
+            self.output_stream.write_arithmetic("add")
             # "]"
-            self.write_terminal_exp("symbol", self.get_token())
-        """
-        # '='
-        self.get_token()
+            self.get_token()
+
+            # '='
+            self.get_token()
+
+            # expression
+            self.compile_expression()
+            self.output_stream.write_pop("temp", 0)
+            self.output_stream.write_pop("pointer", 1)
+            self.output_stream.write_push("temp", 0)
+            self.output_stream.write_pop("that", 0)
+        else:
+            # '='
+            self.get_token()
 
         # expression
         self.compile_expression()
@@ -407,8 +420,7 @@ class CompilationEngine:
         if token_type == "INT_CONST":
             self.output_stream.write_push("constant", self.get_token())
         elif token_type == "STRING_CONST":
-            #self.write_terminal_exp("stringConstant", self.get_token())  # TODO use a call to string function
-            self.output_stream.write(self.get_token())
+            self.compile_string_const()
         elif token_type == "KEYWORD":
             self.compile_keyowrd_term()
         # (unaryOp term) | '(' expression ')'
@@ -427,10 +439,13 @@ class CompilationEngine:
             var = self.get_token()
             # '[' expression ']'
             if self.input_stream.currentToken == '[':
-                self.write_terminal_exp("identifier", var)
-                self.write_terminal_exp("symbol", self.get_token())
+                self.get_token()
                 self.compile_expression()
-                self.write_terminal_exp("symbol", self.get_token())
+                self.output_stream.write_push_var(self.symbol_table.kind_and_index(var))
+                self.output_stream.write_arithmetic("add")
+                self.output_stream.write_pop("pointer", 1)
+                self.output_stream.write_push("that",0)
+                self.get_token()
             # subroutineCall
             elif self.input_stream.currentToken in ['(', '.']:
                 self.compile_subroutine_call(var)
@@ -558,8 +573,8 @@ class CompilationEngine:
             self.output_stream.write_pop("pointer", 0)
 
         if is_method:
-            self.output_stream.write_push("argument",0)
-            self.output_stream.write_pop("pointer",0)
+            self.output_stream.write_push("argument", 0)
+            self.output_stream.write_pop("pointer", 0)
         # statements
         self.compile_statements(is_constractor=is_constractor)
 
@@ -617,7 +632,7 @@ class CompilationEngine:
         function_name = self.symbol_table.class_name + "." + function_name
         #
         # subroutine body
-        self.write_subroutine_body(function_name,True)
+        self.write_subroutine_body(function_name, True)
 
     def compile_constractor(self):
         # first we want to find an available memory segment of size n (the num of inputs)
@@ -662,3 +677,12 @@ class CompilationEngine:
             self.output_stream.write_push('constants', 0)
         elif token == 'this':
             self.output_stream.write_push('pointer', 0)
+
+    def compile_string_const(self):
+        string = self.get_token().replace('"','')
+        self.output_stream.write_push("constant",len(string))
+        self.output_stream.write_call("String.new", 1)
+        for c in string:
+            self.output_stream.write_push("constant",ord(c))
+            self.output_stream.write_call("String.appendChar",2)
+
