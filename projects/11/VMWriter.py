@@ -9,35 +9,6 @@ import sys
 import typing
 
 
-def generate_label():
-    index = 0
-    while True:
-        index += 1
-        yield "Label" + str(index)
-
-
-label_generator = generate_label()
-
-
-def generate_if():
-    i = 0
-    while True:
-        yield f'IF_TRUE{i}', f'IF_FALSE{i}', f'IF_END{i}'
-        i += 1
-
-
-def generate_while():
-    i = 0
-    while True:
-        yield f'WHILE_EXP{i}', f'WHILE_END{i}'
-        i += 1
-
-
-while_label_generator = generate_while()
-
-if_label_generator = generate_if()
-
-
 class VMWriter:
     """
     Writes VM commands into a file. Encapsulates the VM command syntax.
@@ -50,12 +21,25 @@ class VMWriter:
         '~': 'not', '-': 'neg', '^': 'shiftleft', '#': 'shiftright'
     }
 
+    def generate_if(self):
+        i = 0
+        while True:
+            yield f'IF_TRUE{i}', f'IF_FALSE{i}', f'IF_END{i}'
+            i += 1
+
+    def generate_while(self):
+        i = 0
+        while True:
+            yield f'WHILE_EXP{i}', f'WHILE_END{i}'
+            i += 1
+
     def __init__(self, output_stream: typing.TextIO) -> None:
         """Creates a new file and prepares it for writing VM commands."""
         # Your code goes here!
         # Note that you can write to output_stream like so:
         # output_stream.write("Hello world! \n")
-
+        self.while_label_generator = self.generate_while()
+        self.if_label_generator = self.generate_if()
         self.output = output_stream
 
     def write_push(self, segment: str, index: int) -> None:

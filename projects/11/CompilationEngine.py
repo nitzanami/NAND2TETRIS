@@ -9,7 +9,7 @@ import sys
 import typing
 import JackTokenizer
 from SymbolTable import SymbolTable
-from VMWriter import VMWriter, if_label_generator, while_label_generator
+from VMWriter import VMWriter
 
 VOID_RETURN = 0
 
@@ -261,18 +261,19 @@ class CompilationEngine:
             # '='
             self.get_token()
 
-        # expression
-        self.compile_expression()
-        if is_constractor:
-            self.output_stream.write_pop_var(("this",self.symbol_table.kind_and_index(name)[1]))
-        else:
-            self.output_stream.write_pop_var(self.symbol_table.kind_and_index(name))
+            # expression
+            self.compile_expression()
+            if is_constractor:
+
+                self.output_stream.write_pop_var(("this",self.symbol_table.kind_and_index(name)[1]))
+            else:
+                self.output_stream.write_pop_var(self.symbol_table.kind_and_index(name))
         # ";"
         self.get_token()
 
     def compile_while(self) -> None:
         """Compiles a while statement."""
-        while_exp, while_end = next(while_label_generator)
+        while_exp, while_end = next(self.output_stream.while_label_generator)
 
         # while - skip -
         # self.write_terminal_exp("keyword", self.get_token())
@@ -331,7 +332,7 @@ class CompilationEngine:
 
     def compile_if(self) -> None:
         """Compiles a if statement, possibly with a trailing else clause."""
-        if_true, if_false, if_end = next(if_label_generator)
+        if_true, if_false, if_end = next(self.output_stream.if_label_generator)
         # if - skip
         # self.write_terminal_exp("keyword", self.get_token())
         self.get_token()
@@ -467,10 +468,7 @@ class CompilationEngine:
             type = self.symbol_table.type_of(identifier)
             # if a method
             if type is not None:
-                if is_constractor:
-                    self.output_stream.write_push_var(("pointer", self.symbol_table.kind_and_index(identifier)[1]))
-                else:
-                    self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+                self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
                 identifier = self.symbol_table.type_of(identifier)
                 n_args = 1
             # '.' - symbol
@@ -479,10 +477,7 @@ class CompilationEngine:
             # subroutineName - identifier
             identifier += self.get_token()
         else:   # subroutineName'('expressionList')'
-            if is_constractor:
-                self.output_stream.write_push_var(("pointer", self.symbol_table.kind_and_index(identifier)[1]))
-            else:
-                self.output_stream.write_push_var(self.symbol_table.kind_and_index(identifier))
+            self.output_stream.write_push("pointer",0)
             identifier = self.symbol_table.class_name + '.' + identifier
             n_args = 1
 
@@ -556,7 +551,7 @@ class CompilationEngine:
 
         # varDec*
         # while the next token is "var" the next statement is a varDec
-        var_count = 1 if is_method else 0
+        var_count = 0
         param_count = len(self.symbol_table.class_table) if is_constractor else 0
         while self.input_stream.keyword() == "VAR":
             var_count += self.compile_var_dec()
