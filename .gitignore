@@ -3,3 +3,13 @@
 *.pyc
 *.vm
 *.asm
+*.zip
+projects/11/.idea/.name
+projects/11/.idea/11.iml
+projects/11/.idea/inspectionProfiles/profiles_settings.xml
+projects/11/.idea/inspectionProfiles/Project_Default.xml
+projects/11/.idea/misc.xml
+projects/11/.idea/modules.xml
+projects/11/.idea/vcs.xml
+*.xml
+*.patch
