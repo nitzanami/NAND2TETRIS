@@ -14,31 +14,53 @@
 class String {
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
+	 field Array chars;
+	 field int max,current;
     constructor String new(int maxLength) {
+		if(maxLength > 0) {
+			let chars = Array.new(maxLength);
+		}
+		let max = maxLength;
+		let current = 0;
+		return this;
     }
 
     /** Disposes this string. */
     method void dispose() {
+		if(max > 0){
+			do Memory.deAlloc(chars);
+		}
+		do Memory.deAlloc(this);
+		return;
     }
 
     /** Returns the current length of this string. */
     method int length() {
+		return current;
     }
 
     /** Returns the character at the j-th location of this string. */
     method char charAt(int j) {
+		return chars[j];
     }
 
     /** Sets the character at the j-th location of this string to c. */
     method void setCharAt(int j, char c) {
+		let chars[j] = c;
+		return;
     }
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
+		let chars[current] = c;
+		let current = current + 1;
+		return this;
     }
 
     /** Erases the last character from this string. */
     method void eraseLastChar() {
+		let current = current - 1;
+		return;
     }
 
     /** Returns the integer value of this string, 
@@ -50,6 +72,29 @@ class String {
         // 3.   let d = integer value of str.charAt(i)
         // 4.   let val = (val*10) + d
         // 5. return val
+		var int val, i, d, sign;
+		var char c;
+		let val = 0;
+		let i = 0;
+		let sign = 1;
+		if(charAt(i) = 45){
+			let i = i + 1;
+			let sign = -1;
+		}
+		while(i < current){
+			let c = charAt(i);
+			if((c > 47) & (c < 58)){
+				let val = val*10 + (c - 48);
+			}
+			else {
+				let i = current;
+			}
+			let i = i+1;
+		}
+		if(sign = -1){
+			return -val;
+		}
+		return val;
     }
 
     /** Sets this string to hold a representation of the given value. */
@@ -61,17 +106,40 @@ class String {
         // 4.   return c (as a string)
         // 5. else
         // 6.   return int2String(val / 10).appendChar(c)
+		let current = 0;
+		if(val < 0){
+			let val = -val;
+			do appendChar(45);
+		}
+		do appendInt(val);
+		return;
     }
+	method void appendInt(int val){
+		var int lastDigit,c;
+		//var char c;
+		let lastDigit = val - ((val / 10) * 10);
+		let c = val + 48;
+		if (val < 10){
+			do appendChar(c);
+			return;
+		}
+		do appendInt(val / 10);
+		do appendChar(c);
+		return;
+	}
 
     /** Returns the new line character. */
     function char newLine() {
+		return 128;
     }
 
     /** Returns the backspace character. */
     function char backSpace() {
+		return 128;
     }
 
     /** Returns the double quote (") character. */
     function char doubleQuote() {
+		return 34;
     }
 }
