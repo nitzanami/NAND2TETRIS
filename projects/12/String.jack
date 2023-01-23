@@ -116,9 +116,8 @@ class String {
     }
 	method void appendInt(int val){
 		var int lastDigit,c;
-		//var char c;
 		let lastDigit = val - ((val / 10) * 10);
-		let c = val + 48;
+		let c = lastDigit + 48;
 		if (val < 10){
 			do appendChar(c);
 			return;
@@ -135,7 +134,7 @@ class String {
 
     /** Returns the backspace character. */
     function char backSpace() {
-		return 128;
+		return 129;
     }
 
     /** Returns the double quote (") character. */
