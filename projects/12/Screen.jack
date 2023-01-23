@@ -79,10 +79,10 @@ class Screen {
 			//if color == Ram[pos].color do nothing, else flip it
 			if((~(curr&ithBit)) = color) {
 				if(color = 1){
-					let curr = curr + ithBit;
+					let curr = curr - ithBit;
 				}
 				else{
-					let curr = curr - ithBit;
+					let curr = curr + ithBit;
 				}
 			}
 			do Memory.poke(pos, curr);

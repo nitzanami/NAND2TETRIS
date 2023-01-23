@@ -14,16 +14,16 @@ class Memory {
     /** Initializes the class. */
 	static Array ram;
 	static Array freeList;
-	static Array heap;
     function void init() {
         // Pseudocode:
         // 1. freeList = heapBase
         // 2. freeList.length = heapLength
         // 3. freeList.next = null
 		let ram = 0;
-		let freeList = 2048
-		let heap[0] = 0
-		let heap[1] = 14335
+		let freeList = 2049;
+		let freeList[0] = 0;
+		let freeList[-1] = 14335;
+		return;
     }
 
     /** Returns the RAM value at the given address. */
@@ -34,6 +34,7 @@ class Memory {
     /** Sets the RAM value at the given address to the given value. */
     function void poke(int address, int value) {
 		let ram[address] = value;
+		return;
     }
 
     /** Finds an available RAM block of the given size and returns
@@ -50,8 +51,25 @@ class Memory {
         // 5. Return block
         // The figure MemoryTest/MemoryFreeListExample.png illustrates how
         // the freeList should look like.
-		
-		
+		var int next, currSize;
+		var Array currBlock, retBlock;
+		let currBlock = freeList;
+		let size = freeList[-1];
+		let next = freeList[0];
+		while(next>0){
+			if(currSize > size){
+				let retBlock = currBlock + currSize - size;
+				let retBlock[-1] = size;
+				let currBlock[-1] = currBlock[-1] - size - 1;
+				return retBlock;
+			}
+			else{
+				let currBlock = next;
+				let next = currBlock[0];
+				let size = currBlock[-1];
+			}
+		}
+		return -1;
     }
 
     /** De-allocates the given object (cast as an array) by making
@@ -60,6 +78,15 @@ class Memory {
         // Pseudocode:
         // 1. segment = o - 1
         // 2. Insert segment into the freeList
+		var Array segment;
+		var int next, size;
+		let size = o[-1];
+		let next = freeList[0];
+		let segment = o;
+		let freeList[0] = segment;
+		let segment[0] = next;
+		let segment[-1] = size; 
+		return;
     }    
 
     /** Returns the maximal element contained in the given Array/object. 
@@ -68,5 +95,19 @@ class Memory {
         // Hint: the algorithm you need to implement in Memory.alloc saves the
         // size of the allocated block in the memory cell right before the 
         // start of the block, and this can be used to implement Memory.max.
+		var int size, maxSize;
+		var Array next,curr, max;
+		let curr = freeList;
+		let maxSize = 0;
+		while(next>0){
+			let size = curr[-1];
+			let next = curr[0];
+			if(size > maxSize){
+				let max = curr;
+				let maxSize = size;
+			}
+			let curr = next;
+		}
+		return max;
     }
 }
