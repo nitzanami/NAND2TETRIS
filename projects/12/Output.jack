@@ -20,20 +20,26 @@ class Output {
 
     // Character map for displaying characters
     static Array charMaps; 
-
+	static int col,row;
+	static int MAX_ROW,MAX_COL;
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
+		do Output.initMap();
+		let MAX_ROW = 256 / 11;
+		let MAX_COL = 512 / 8;
+		let col = 0;
+		let row = 0;
+		return;
     }
 
     // Initializes the character map array
     function void initMap() {
-        var int i;
     
         let charMaps = Array.new(127);
         
         // Black square, used for displaying non-printable characters.
         do Output.create(0,63,63,63,63,63,63,63,63,63,0,0);
-
+		do Output.create(1,0,0,0,0,0,0,0,0,0,0,0);
         // Assigns the bitmap for each character in the charachter set.
         // The first parameter is the character index, the next 11 numbers
         // are the values of each row in the frame that represents this character.
@@ -73,7 +79,7 @@ class Output {
         do Output.create(64,30,51,51,59,59,59,27,3,30,0,0);  // @
         do Output.create(63,30,51,51,24,12,12,0,12,12,0,0);  // ?
 
-        do Output.create(65,0,0,0,0,0,0,0,0,0,0,0);          // A ** TO BE FILLED **
+        do Output.create(65,12,12,30,18,18,18,51,33,33,0,0);          // A ** TO BE FILLED **
         do Output.create(66,31,51,51,51,31,51,51,51,31,0,0); // B
         do Output.create(67,28,54,35,3,3,3,35,54,28,0,0);    // C
         do Output.create(68,15,27,51,51,51,51,51,27,15,0,0); // D
@@ -161,7 +167,7 @@ class Output {
         let map[8] = i;
         let map[9] = j;
         let map[10] = k;
-
+		
         return;
     }
     
@@ -169,6 +175,9 @@ class Output {
     // If the given character is invalid or non-printable, returns the
     // character map of a black square.
     function Array getMap(char c) {
+		if ( c = -1){
+			return charMaps[1];
+		}
         if ((c < 32) | (c > 126)) {
             let c = 0;
         }
@@ -178,30 +187,116 @@ class Output {
     /** Moves the cursor to the j-th column of the i-th row,
      *  and erases the character displayed there. */
     function void moveCursor(int i, int j) {
+		do Output.clearChar(row,col);
+		let col = j;
+		let row = i;
+		do Output.displayChar(row,col,0);
+		return;
     }
 
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
-        // Your implementation should be as efficient as possible.
-        // For example, you can draw multiple pixels at once, for each row.
+		do Output.displayChar(row,col,c);
+		do Output.updateCursor(1);
+		do Output.displayChar(row,col,0);
+		return;
     }
 
     /** displays the given string starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printString(String s) {
+		var int i,len;
+		let i = 0;
+		let len = s.length();
+		while(i < len){
+			do Output.printChar(s.charAt(i));
+			let i = i + 1;
+		}
+		return;
     }
 
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
+		var String s;
+		let s = String.new(64);
+		do s.setInt(i);
+		do Output.printString(s);
+		do s.dispose();
+		return;
     }
 
     /** Advances the cursor to the beginning of the next line. */
     function void println() {
+		do Output.clearChar(row,col);
+		let col = MAX_COL - 1;
+		do Output.updateCursor(1);
+		do Output.moveCursor(row,col);
+		return;
     }
 
     /** Moves the cursor one column back. */
     function void backSpace() {
+		do Output.clearChar(row,col);
+		do Output.updateCursor(-1);
+		do Output.displayChar(row,col,0);
+		
+		return;
     }
+	function void updateCursor(int dir){
+		let col = col + dir;
+		if (col = MAX_COL){
+			let col = 0;
+			let row = row + dir;
+		}
+		else {
+			if (col = 0){
+				let col = MAX_COL - 1;
+			}
+		}
+		if (row = MAX_ROW){
+			let row = 0;
+		}
+		else{
+			if(row = 0){
+				//maybe add decrement
+			}
+		}
+		return;
+	}
+	function void displayChar(int rowNum, int colNum, char c){
+		var Array map;
+		var int i, curr,shiftedX,shiftedY,curr,mask,pos;
+		let map = Output.getMap(c);
+		let shiftedY = (^rowNum) * 11;
+		let shiftedX = ^^^colNum;
+		let i = 0;
+		while(i<4) {
+			let shiftedY = ^shiftedY;
+			let shiftedX = #shiftedX;
+			let i = i + 1;
+		}
+		let pos = 16384  + shiftedX + shiftedY;
+			
+		let i = 0;
+		while (i < 11){
+			let curr = Memory.peek(pos + (32 * i));
+			if ((colNum & 1) = 0){
+				let mask = 255 * 256;
+				let curr = (curr & mask) | map[i];
+			}
+			else{
+				let mask = 255;
+				let curr = (curr & mask) | (map[i] * 256);
+			}
+			do Memory.poke(pos + (32 * i), curr);
+			let i = i + 1;
+		}
+		return;
+	}
+	function void clearChar(int r, int c){
+		do Output.displayChar(r,c,-1);
+		return;
+	}
 }
