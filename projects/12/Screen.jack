@@ -27,7 +27,7 @@ class Screen {
 			var int i;
 			let i = 0;
 			while(i<screen_size){
-				do Memory.poke(SCREEN + i, color);
+				do Memory.poke(SCREEN + i, 0);
 				let i = i + 1;
 			}
 			return;
@@ -62,14 +62,10 @@ class Screen {
             // address.
 			var int ithBit,curr ,i, pos, shiftedY, shiftedX, xRemains;
 			let i = 0;
-			let shiftedY = ^y;
-			let shiftedX = x;
-			while(i<4) {
-				let shiftedY = ^shiftedY;
-				let shiftedX = #shiftedX;
-				let i = i + 1;
-			}
-			let pos = 16384  + shiftedX + shiftedY;
+			let shiftedY = ^^^^^y;
+			let shiftedX = ####x;
+			
+			let pos = SCREEN  + shiftedX + shiftedY;
 			let curr = Memory.peek(pos);
 			let xRemains = (x&15);
 			let ithBit = 1;
@@ -79,14 +75,12 @@ class Screen {
 				let i = i + 1;
 			}
 			//if color == Ram[pos].color do nothing, else flip it
-			if((~(curr&ithBit)) = color) {
-				if(color = 1){
-					let curr = curr + ithBit;
-				}
-				else{
-					let curr = curr - ithBit;
-				}
+			if(((curr&ithBit) = 0) & (color = 1)) {
+				let curr = curr + ithBit;
 			}
+			else{if((~((curr&ithBit) = 0)) & (color = 0)){
+				let curr = curr - ithBit;
+			}}
 			do Memory.poke(pos, curr);
 			return;
         }
@@ -152,7 +146,7 @@ class Screen {
         }
 		
 		function void drawDiagonalLine(int x1, int y1, int x2, int y2){
-			var int x, y ,a ,b ,diff, dx, dy;
+			var int x, y ,a ,b ,diff, dx, dy, aDiff, bDiff;
 
 			let a = 0;
 			let b = 0;
@@ -161,20 +155,33 @@ class Screen {
 			if(x1 < x2){
 				let x = x1;
 				let dx = x2 - x1;
+				
+				let y = y1;
+				if(y1 < y2){
+					let bDiff = 1;
+					let dy = y2 - y1;
+				}
+				else{
+					let bDiff = -1;
+					let dy = y1 - y2;
+				}
 			}
 			else{
 				let x = x2;
 				let dx = x1 - x2;
+				
+				let y = y2;
+				if(y1 < y2){
+					let bDiff = -1;
+					let dy = y2 - y1;
+				}
+				else{
+					let bDiff = 1;
+					let dy = y1 - y2;
+				}
 			}
 			
-			if(y1 < y2){
-				let y = y1;
-				let dy = y2 - y1;
-			}
-			else{
-				let y = y2;
-				let dy = y1 - y2;
-			}
+			
 
 			while((a < dx) & (b < dy)){
 				do Screen.drawPixel(x+a, y+b);
@@ -183,8 +190,8 @@ class Screen {
 					let diff = diff + dy;
 				}
 				else {
-					let b = b + 1;
-					let diff = diff + dx;
+					let b = b + bDiff;
+					let diff = diff - dx;
 				}
 			}
 			return;
@@ -221,8 +228,8 @@ class Screen {
 			var int dy, dist, a, b;
 			let dy = -r;
 			while(dy < r) {
-				let a = Math.sqrt(Math.multiply(r, r) - Math.multiply(dy, dy));
-				let b = Math.sqrt(Math.multiply(r, r) + Math.multiply(dy, dy));
+				let a = x-Math.sqrt(Math.multiply(r, r) - Math.multiply(dy, dy));
+				let b = x+Math.sqrt(Math.multiply(r, r) - Math.multiply(dy, dy));
 				do Screen.drawLine(a, y + dy, b, y + dy);
 				let dy = dy + 1;
 			}

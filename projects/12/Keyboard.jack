@@ -52,11 +52,12 @@ class Keyboard {
             // 5. display c at the current cursor location
             // 6. advance the cursor
             // 7. return c
-			
 			var char c;
+			do Output.printChar(0);
 			while (Keyboard.keyPressed() = 0){}
 			let c = Keyboard.keyPressed();
 			while (~(Keyboard.keyPressed() = 0)) {}
+			do Output.backSpace();
 			do Output.printChar(c);
 			return c;
         }
@@ -116,6 +117,6 @@ class Keyboard {
         function int readInt(String message) {
 			var String s;
 			let s = Keyboard.readLine(message);
-            return String.intValue(s);
+            return s.intValue();
         }
 }

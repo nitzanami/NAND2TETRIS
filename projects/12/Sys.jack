@@ -52,7 +52,7 @@ class Sys {
 		var String s;
 		do Output.printString("ERR");
 		let s = String.new(64);
-		do s.intVal(errorCode);
+		do s.setInt(errorCode);
 		do Output.printString(s);
 		do Sys.halt();
 		return;
