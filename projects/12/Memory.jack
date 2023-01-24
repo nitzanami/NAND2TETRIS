@@ -14,15 +14,18 @@ class Memory {
     /** Initializes the class. */
 	static Array ram;
 	static Array freeList;
+	static int freeListBase;
     function void init() {
         // Pseudocode:
         // 1. freeList = heapBase
         // 2. freeList.length = heapLength
         // 3. freeList.next = null
 		let ram = 0;
-		let freeList = 2049;
-		let freeList[0] = 0;
+		let freeListBase = 2049; 
+		let freeList = freeListBase;
+		let freeList[0] = freeListBase;
 		let freeList[-1] = 14335;
+		
 		return;
     }
 
@@ -36,6 +39,7 @@ class Memory {
 		let ram[address] = value;
 		return;
     }
+
 
     /** Finds an available RAM block of the given size and returns
      *  a reference to its base address. Assume size > 0. */
@@ -54,21 +58,30 @@ class Memory {
 		var int next, currSize;
 		var Array currBlock, retBlock;
 		let currBlock = freeList;
-		let size = freeList[-1];
 		let next = freeList[0];
-		while(next>0){
-			if(currSize > size){
-				let retBlock = currBlock + currSize - size;
-				let retBlock[-1] = size;
-				let currBlock[-1] = currBlock[-1] - size - 1;
-				return retBlock;
-			}
-			else{
-				let currBlock = next;
-				let next = currBlock[0];
-				let size = currBlock[-1];
+		let currSize = freeList[-1];
+		if((currSize - 1) > size){
+			let retBlock = currBlock + currSize - size;
+			let retBlock[-1] = size;
+			let currBlock[-1] = currBlock[-1] - size - 1;
+			return retBlock;
+		}
+		else{
+			while(next > freeListBase){
+				if((currSize - 1) > size){
+					let retBlock = currBlock + currSize - size;
+					let retBlock[-1] = size;
+					let currBlock[-1] = currBlock[-1] - size - 1;
+					return retBlock;
+				}
+				else{
+					let currBlock = next;
+					let next = currBlock[0];
+					let size = currBlock[-1];
+				}
 			}
 		}
+		
 		return -1;
     }
 
@@ -78,16 +91,19 @@ class Memory {
         // Pseudocode:
         // 1. segment = o - 1
         // 2. Insert segment into the freeList
-		var Array segment;
+		var Array segment, curr;
 		var int next, size;
-		let size = o[-1];
-		let next = freeList[0];
 		let segment = o;
-		let freeList[0] = segment;
-		let segment[0] = next;
-		let segment[-1] = size; 
+		let curr = freeList;
+		let next = freeList[0];
+		while(next > 2049){
+			let curr = next;
+			let next = curr[0];
+		}
+		let curr[0] = segment;
 		return;
     }    
+	
 
     /** Returns the maximal element contained in the given Array/object. 
      *  Assume inputs are initialized and contain at least one element. */
@@ -99,7 +115,7 @@ class Memory {
 		var Array next,curr, max;
 		let curr = freeList;
 		let maxSize = 0;
-		while(next>0){
+		while(next>freeListBase){
 			let size = curr[-1];
 			let next = curr[0];
 			if(size > maxSize){
