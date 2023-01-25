@@ -1,0 +1,5 @@
+Usage:
+    JackCompiler              Compiles all .jack files in the current
+                              working directory.
+    JackCompiler DIRECTORY    Compiles all .jack files in DIRECTORY.
+    JackCompiler FILE.jack    Compiles FILE.jack to FILE.vm.

@@ -14,18 +14,20 @@ class Memory {
     /** Initializes the class. */
 	static Array ram;
 	static Array freeList;
-	static int freeListBase;
+	static int freeListBase, endAddress, DEBUG_I;
     function void init() {
         // Pseudocode:
         // 1. freeList = heapBase
         // 2. freeList.length = heapLength
         // 3. freeList.next = null
 		let ram = 0;
+		let endAddress = 0;
 		let freeListBase = 2049; 
 		let freeList = freeListBase;
-		let freeList[0] = freeListBase;
+		let freeList[0] = endAddress;
 		let freeList[-1] = 14335;
-		
+		let DEBUG_I = 8000;
+		do Memory.poke(DEBUG_I, DEBUG_I+1);
 		return;
     }
 
@@ -96,14 +98,48 @@ class Memory {
 		let segment = o;
 		let curr = freeList;
 		let next = freeList[0];
-		while(next > 2049){
+		while(next > endAddress){
+			do Memory.DEBUG_PRINT(curr, false);
 			let curr = next;
 			let next = curr[0];
 		}
 		let curr[0] = segment;
+		let segment[0] = endAddress;
+		do Memory.print_freeList();
 		return;
     }    
 	
+	function void print_freeList(){
+		var Array segment, curr;
+		var int next, size;
+		let curr = freeList;
+		let next = freeList[0];
+		let size = curr[-1];
+		do Memory.DEBUG_PRINT(11111, true);
+		while(next > endAddress){
+			let curr = next;
+			let next = curr[0];
+			do Memory.DEBUG_PRINT(curr, false);
+			
+		}
+		do Memory.DEBUG_PRINT(22222, false);
+		return;
+	}
+	
+	
+	function void DEBUG_PRINT(int val, boolean overwrite){
+		var int i;
+		let i = Memory.peek(DEBUG_I);
+		do Memory.poke(i, val);
+		let i = i + 1;
+		if(overwrite){
+			do Memory.poke(DEBUG_I,8000);
+		}
+		else{
+			do Memory.poke(DEBUG_I,i);
+		}
+		return;
+	}
 
     /** Returns the maximal element contained in the given Array/object. 
      *  Assume inputs are initialized and contain at least one element. */

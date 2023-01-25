@@ -99,10 +99,11 @@ class Screen {
             //
             // The case where y1 == y2 can be implemented efficiently by
             // trying to draw as many pixels as possible in a single assignment,
-            // similarly to Fill in project 4.
+            // similarly to Fill in project 4.+-
 			
 			// CASE I: y1 !
 			var int y, x, i, diff;
+			var int shiftedX, shiftedY, pos, ithBit,curr, xRemains, xf;
 			if((~(y1 = y2)) & (~(x1 = x2))){
 				do Screen.drawDiagonalLine(x1, y1 , x2, y2);
 			}
@@ -111,16 +112,116 @@ class Screen {
 				if(y1 = y2) {
 					if(x1 < x2){
 						let x = x1;	
+						let xf = x2;
 						let diff = x2 - x1;
 					}
 					else {
 						let x = x2;	
 						let diff = x1 - x2;
 					}
-					while (i - 1< diff) {
-						do Screen.drawPixel(x+i, y1);
+					
+					// more efficient impemintation
+					
+					let shiftedY = ^^^^^y1;
+					let shiftedX = ####x;
+			
+					let pos = SCREEN  + shiftedX + shiftedY;
+					let xRemains = (x&15);
+					let ithBit = 1;
+					let i = 0;
+					
+					
+
+					// if the line is shorter than the end of the block
+					if((16-xRemains) > (diff)){
+						let i = 0;
+						while(i<(xRemains+diff)){
+							let ithBit = ^ithBit;
+							if(i<diff){
+								let ithBit = ithBit + 1;
+							}
+							let i = i + 1;
+						}
+						let curr = Memory.peek(pos);
+						if(color = 0){
+							let ithBit = ~ithBit;
+							let curr = curr & ithBit;
+							do Memory.poke(pos,curr);						
+						}
+						else{
+							let curr = curr | ithBit;
+							do Memory.poke(pos,curr);	
+						}
+						return;
+					}
+					else{
+						//draw till the end of the block
+						while(i<(xRemains)) {
+							let ithBit = ^ithBit;
+							let ithBit = ithBit + 1;
+							let i = i + 1;
+						}
+						let ithBit = (~ithBit);
+					}
+					
+					let curr = Memory.peek(pos);
+					if(color = 0){
+						let ithBit = ~ithBit;
+						let curr = curr & ithBit;
+						do Memory.poke(pos,curr);						
+					}
+					else{
+						let curr = curr | ithBit;
+						do Memory.poke(pos,curr);	
+					}
+					
+					//go to the next strip
+					let x = x - xRemains;
+					let shiftedY = ^^^^^y1;
+					let shiftedX = ####x;
+					let pos = SCREEN  + shiftedX + shiftedY;
+					let diff = diff - (16 - xRemains);
+					//draw full blocks 
+					
+					while(diff > 15){
+						//let i = Memory.peek(7999);
+						//do Memory.poke(i+8000, diff);
+						//do Memory.poke(7999,i + 1);
+						let pos = pos + 1;
+						let diff = diff - 16;
+						if(color = 1){
+							do Memory.poke(pos,-1);
+						}
+						else{
+							do Memory.poke(pos,0);
+						}
+						
+					}
+					
+					// draw the end
+					let pos = pos+1;
+					let ithBit = 1;
+					let i = 0;
+					let diff = diff & 15;
+					while(i < diff) {
+						let ithBit = ^ithBit;
+						let ithBit = ithBit + 1;
 						let i = i + 1;
 					}
+					let curr = Memory.peek(pos);
+					if(color = 0){
+						let ithBit = ~ithBit;
+						let curr = curr & ithBit;
+						do Memory.poke(pos,curr);						
+					}
+					else{
+						let curr = curr | ithBit;
+						do Memory.poke(pos,curr);	
+					}
+					
+					
+					
+					
 				}
 				if(x1 = x2) {
 					if(y1 < y2){
@@ -131,9 +232,11 @@ class Screen {
 					let y = y2;	
 					let diff = y1 - y2;
 					}
-					while (i - 1 < diff) {
+					while ((i - 1) < diff) {
 						do Screen.drawPixel(x1, y+i);
 						let i = i + 1;
+						
+						
 					}
 				}
 			}
