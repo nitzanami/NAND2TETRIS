@@ -156,7 +156,7 @@ class Screen {
 					}
 					else{
 						//draw till the end of the block
-						while(i<(xRemains)) {
+						while(i<(xRemains-1)) {
 							let ithBit = ^ithBit;
 							let ithBit = ithBit + 1;
 							let i = i + 1;
