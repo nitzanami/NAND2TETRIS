@@ -107,39 +107,35 @@ class Screen {
 				do Screen.drawDiagonalLine(x1, y1 , x2, y2);
 			}
 			else {
+				let i = 0;
 				if(y1 = y2) {
 					if(x1 < x2){
-						let i = 0;
 						let x = x1;	
 						let diff = x2 - x1;
 					}
 					else {
-						let i = 0;
 						let x = x2;	
 						let diff = x1 - x2;
 					}
-					while (i < diff) {
+					while (i - 1< diff) {
 						do Screen.drawPixel(x+i, y1);
 						let i = i + 1;
 					}
 				}
 				if(x1 = x2) {
 					if(y1 < y2){
-					let i = 0;
 					let y = y1;	
 					let diff = y2 - y1;
 					}
 					else {
-					let i = 0;
 					let y = y2;	
 					let diff = y1 - y2;
 					}
-					while (i < diff) {
+					while (i - 1 < diff) {
 						do Screen.drawPixel(x1, y+i);
 						let i = i + 1;
 					}
 				}
-
 			}
 			return;
 			
@@ -210,7 +206,7 @@ class Screen {
 				let diff = y1 - y2;
 			}
 			let i = 0;
-			while(i < diff){
+			while(i - 1 < diff){
 				do Screen.drawLine(x1, y+i, x2, y+i);
 				let i = i + 1;
 			}

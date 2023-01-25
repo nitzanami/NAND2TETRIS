@@ -195,6 +195,14 @@ class Output {
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
+		if(c = String.backSpace()){
+			do Output.backSpace();
+			return;
+		}
+		if(c = String.newLine()){
+			do Output.println();
+			return;
+		}
 		do Output.displayChar(row,col,c);
 		do Output.updateCursor(1);
 		return;
